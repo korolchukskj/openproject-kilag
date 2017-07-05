@@ -140,6 +140,10 @@ export class WorkPackageSingleViewController {
     }
   }
 
+  public helpTextLabel(attribute:string) {
+    return this.I18n.t('js.')
+  }
+
   /*
   * Returns the work package label
   */
