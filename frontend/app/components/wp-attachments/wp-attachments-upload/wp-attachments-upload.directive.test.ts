@@ -114,7 +114,7 @@ describe('wpAttachmentsUpload directive', () => {
     });
 
     it('should set the max size property of the element to the configured value', () => {
-      expect(rootElement.attr('ngf-max-size')).to.equal(mockMaxSize.toString());
+      expect(rootElement.attr('ngf-validate')).to.equal(`{size: {max: ${mockMaxSize.toString()}`);
     });
 
     describe('when clicking the parent element', () => {
