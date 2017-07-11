@@ -33,6 +33,10 @@ function wpCopyButton() {
     restrict: 'E',
     templateUrl: '/components/wp-buttons/wp-copy-btn/wp-copy-button.directive.html',
 
+    scope: {
+      projectIdentifier: '='
+    },
+
     bindToController: true,
     controllerAs: '$ctrl',
     controller: 'WorkPackageCopyButtonController'

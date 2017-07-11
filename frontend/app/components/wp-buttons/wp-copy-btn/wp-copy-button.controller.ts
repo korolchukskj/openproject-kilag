@@ -2,6 +2,7 @@ import {wpButtonsModule} from '../../../angular-modules';
 
 export default class WorkPackageCopyButtonController {
   public text:any;
+  public projectIdentifier:string;
 
   constructor(protected $state:ng.ui.IStateService,
               protected I18n:op.I18n,
@@ -12,7 +13,8 @@ export default class WorkPackageCopyButtonController {
   }
 
   public copyWorkPackage() {
-    this.WorkPackageButtonsService.copyPakcage();
+    // this.WorkPackageButtonsService.copyPakcage(this.projectIdentifier);
+    this.WorkPackageButtonsService.copyPakcage(this.$state.params['projectPath'] || 1);
   }
 }
 
