@@ -11,6 +11,8 @@ export const cellClassName = 'wp-table--cell-span';
 export const editCellContainer = 'wp-table--cell-container';
 export const wpCellTdClassName = 'wp-table--cell-td';
 export const cellEmptyPlaceholder = '-';
+export const greenClassName = 'green';
+export const redClassName = 'red';
 
 export class CellBuilder {
 
@@ -73,6 +75,12 @@ export class CellBuilder {
       text = cellEmptyPlaceholder;
     } else {
       text = field.valueString;
+    }
+
+    if (field.type === 'boolean' && field.valueString === 'yes') {
+      span.classList.add(greenClassName);
+    } else if (field.type === 'boolean' && field.valueString === 'no') {
+      span.classList.add(redClassName);
     }
 
     field.render(span, text);
