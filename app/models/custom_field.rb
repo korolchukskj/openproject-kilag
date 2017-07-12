@@ -37,7 +37,7 @@ class CustomField < ActiveRecord::Base
 
   validates_presence_of :field_format
 
-  validates :name, presence: true, length: { maximum: 30 }
+  validates :name, presence: true, length: { maximum: 60 }
 
   validate :uniqueness_of_name_with_scope
 
