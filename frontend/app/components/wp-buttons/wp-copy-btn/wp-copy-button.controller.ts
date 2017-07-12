@@ -3,6 +3,9 @@ import {wpButtonsModule} from '../../../angular-modules';
 export default class WorkPackageCopyButtonController {
   public text:any;
   public projectIdentifier:string;
+  public activeState:string = 'work-packages.copy-package';
+
+  public disableButton:boolean;
 
   constructor(protected $state:ng.ui.IStateService,
               protected I18n:op.I18n,
@@ -14,7 +17,26 @@ export default class WorkPackageCopyButtonController {
 
   public copyWorkPackage() {
     // this.WorkPackageButtonsService.copyPakcage(this.projectIdentifier);
-    this.WorkPackageButtonsService.copyPakcage(this.$state.params['projectPath'] || 1);
+    let copyPromise:ng.IPromise<any> = this.WorkPackageButtonsService.copyPakcage(this.$state.params['projectPath'] || 1);
+    this.toggleDisableButton(true);
+
+    copyPromise.then(function(response) {
+      console.log(response);
+    })
+    .catch(function(error) {
+      console.log(error);
+    })
+    .finally(() => {
+      this.toggleDisableButton(false);
+    })
+  }
+
+  public isDisabled() {
+    return this.disableButton;
+  }
+
+  public toggleDisableButton(state: boolean) {
+    this.disableButton = state;
   }
 }
 
