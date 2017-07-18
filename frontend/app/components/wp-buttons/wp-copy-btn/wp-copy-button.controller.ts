@@ -13,6 +13,12 @@ import {WorkPackageNotificationService} from "../../wp-edit/wp-notification.serv
 
 import {WorkPackagesListService} from '../../wp-list/wp-list.service';
 
+import {States} from "../../states.service";
+
+import {LoadingIndicatorService} from '../../common/loading-indicator/loading-indicator.service';
+
+import IPromise = angular.IPromise;
+
 export default class WorkPackageCopyButtonController {
   public newWorkPackage:WorkPackageResource|any;
   public parentWorkPackage:WorkPackageResource|any;
@@ -27,6 +33,7 @@ export default class WorkPackageCopyButtonController {
 
   constructor(public $scope:ng.IScope,
               public wpTableSelection:WorkPackageTableSelection,
+              public loadingIndicator: LoadingIndicatorService,
               protected $http:ng.IHttpService,
               protected $window:ng.IWindowService,
               protected $state:ng.ui.IStateService,
@@ -64,88 +71,168 @@ export default class WorkPackageCopyButtonController {
   }
 
   public copyWorkPackage() {
-    // this.WorkPackageButtonsService.copyPakcage(this.projectIdentifier);
+    let wpObjectToBeCreated = {};
+    let selectedPakcage:any = this.getSelectedWorkPackages();
 
-    // let copyPromise:ng.IPromise<any> = this.WorkPackageButtonsService.copyPakcage(this.$state.params['projectPath'] || 1);
-    // this.toggleDisableButton(true);
-    //
-    // copyPromise.then((response) => {
-    //   console.log(response);
-    // })
-    // .catch((error) => {
+    let parentId:number = selectedPakcage[0].$source.id
+    let lockVersion:number = 0;
+
+
+    // this.WorkPackageButtonsService.copyPakcage(parentId).then((response:any) => {
+    //   console.log('WORK PACKAGE SERVICE: ', response);
+    // }).catch((error:any) => {
     //   console.log(error);
     // })
-    // .finally(() => {
-    //   this.toggleDisableButton(false);
-    // })
+
+    console.log('State params: ', this.$state.params);
+    console.log('SELECTED PACKAGE: ', selectedPakcage);
+
+    this.loadingIndicator.table.start();
+    this.toggleDisableButton(true);
+
+    // Get info about the certain package;
+    this.$http.get(`/api/v3/work_packages/${parentId}`).then((parentWorkPackageResponse:any) => {
+
+      console.log('SELECTED PACKAGE RESPONSE: ', parentWorkPackageResponse);
+
+      if (!parentWorkPackageResponse.data._links.children) {
+        alert('This work package cannot be copied');
+        document.getElementsByClassName('loading-indicator--background')[0].remove();
+        this.toggleDisableButton(false);
+        throw {};
+      }
+
+      let listOfPromises:any = [];
 
 
-    // this.$http.get('/api/v3/work_packages/schemas/1-1').then((response) => {
-    //   console.log('SCHEMA: ', response);
-    // })
+      // Create parent sub-project work package;
+      console.log('VIEW WORK PACKAGE: ', parentWorkPackageResponse);
 
-    this.createWorkPackage(this.$state.params['projectPath'])
-      .then(wp => {
+      this.createWorkPackage(this.$state.params['projectPath'])
+        .then(wp => {
 
-        this.$http.post('/api/v3/work_packages?notify=true', {
-         "project": "demo-project",
-         "subject": "new work_package",
-         "description": {
-           "format": "textile",
-           "raw": "hallo"
-         },
-         "_links": {
-           "project": {
-        			"href": "/api/v3/projects/1"
-        		},
-           "type": {
-             "href": "/api/v3/types/1",
-             "title": "Task"
+          this.$http.post('/api/v3/work_packages?notify=true', {
+           "project": "demo-project",
+           "subject": parentWorkPackageResponse.data.subject,
+           "parentId": "",
+           "lockVersion": lockVersion,
+           "description": {
+             "format": "textile",
+             "raw": ""
            },
-           "status": {
-             "href": "/api/v3/statuses/1"
-           },
-           "priority": {
-             "href": "/api/v3/priorities/8",
-             "title": "Normal"
+           "_links": {
+             "project": {
+          			"href": "/api/v3/projects/1"
+          		},
+             "type": {
+               "href": "/api/v3/types/3"
+             },
+             "status": {
+               "href": "/api/v3/statuses/1"
+             },
+             "priority": {
+               "href": "/api/v3/priorities/8",
+               "title": "Normal"
+             }
            }
-         }
-        }).then((response) => {
+         }).then((response:any) => {
 
-          // Update result list
-           this.wpListService.loadCurrentResultsListFirstPage();
-        }).catch((error) => {
-          console.log('ERROR: ', error);
+            console.log('CREATE PACKAGE RESPONSE: ', response);
+            let listOfChildrenHref:any = [];
+
+            // here we can create every single child of the parent;
+
+            // 1. fetch work packages info, so we can copy the 'type' properly;
+            parentWorkPackageResponse.data._links.children.forEach((item:any) => {
+              listOfChildrenHref.push(this.$http.get(item.href));
+            });
+
+            Promise.all(listOfChildrenHref).then((listOfWorkPackagesResponse:any) => {
+              // 2. create children of sub-project;
+
+              console.log('LIST OF WORK PACKAGES: ', listOfWorkPackagesResponse);
+
+              if (listOfWorkPackagesResponse) {
+
+                // listOfWorkPackagesResponse.data._links.children.forEach((item:any) => {
+                listOfWorkPackagesResponse.forEach((item:any) => {
+                  listOfPromises.push(
+                    this.createWorkPackage(this.$state.params['projectPath'])
+                      .then(wp => {
+
+                        this.$http.post('/api/v3/work_packages?notify=true', {
+                         "project": this.$state.params['projectPath'],
+                         "subject": item.data.subject,
+                         "parentId": response.data.id,
+                         "lockVersion": lockVersion,
+                         "description": {
+                           "format": "textile",
+                           "raw": ""
+                         },
+                         "_links": {
+                           "project": {
+                        			"href": "/api/v3/projects/1"
+                        		},
+                           "type": {
+                             "href": item.data._embedded.type._links.self.href
+                           },
+                           "status": {
+                             "href": "/api/v3/statuses/1"
+                           },
+                           "priority": {
+                             "href": "/api/v3/priorities/8",
+                             "title": "Normal"
+                           }
+                         }
+                        }).then((response) => {
+
+                        }).catch((error) => {
+                          throw error;
+                        });
+                      })
+                      .catch(error => {
+                        throw error
+                      })
+                  );
+                });
+              }
+
+
+              console.log('LIST OF PROMISES: ', listOfPromises);
+
+
+              Promise.all(listOfPromises).then((resulst) => {
+                document.getElementsByClassName('loading-indicator--background')[0].remove();
+
+                let resultListPromise:ng.IPromise<any> = this.wpListService.loadCurrentResultsListFirstPage();
+                // Refresh result list
+                this.loadingIndicator.table.promise = resultListPromise;
+                resultListPromise.then(() => {
+                  this.toggleDisableButton(false);
+                })
+              }).catch((error) => {
+                throw error;
+              })
+            });
+          }).catch((error) => {
+            throw error;
+          })
+        })
+        .catch(error => {
+          if (error.errorIdentifier == "urn:openproject-org:api:v3:errors:MissingPermission") {
+            this.RootDm.load().then((root:RootResource) => {
+              if (!root.user) {
+                // Not logged in
+                let url: string = this.$location.absUrl();
+                this.$location.path('/login').search({back_url: url});
+                let loginUrl: string = this.$location.absUrl();
+                window.location.href = loginUrl;
+              };
+            });
+            this.wpNotificationsService.handleErrorResponse(error);
+          };
         });
-
-
-
-        // this.newWorkPackage = wp;
-        // this.wpEditModeState.start();
-        // this.wpCacheService.updateWorkPackage(wp);
-        //
-        // if (this.$state.params['parent_id']) {
-        //   scopedObservable(this.$scope, this.wpCacheService.loadWorkPackage(this.$state.params['parent_id']).values$())
-        //     .subscribe(parent => {
-        //       this.parentWorkPackage = parent;
-        //       this.newWorkPackage.parent = parent;
-        //     });
-        // }
-      })
-      .catch(error => {
-        if (error.errorIdentifier == "urn:openproject-org:api:v3:errors:MissingPermission") {
-          this.RootDm.load().then((root:RootResource) => {
-            if (!root.user) {
-              // Not logged in
-              let url: string = this.$location.absUrl();
-              this.$location.path('/login').search({back_url: url});
-              let loginUrl: string = this.$location.absUrl();
-              window.location.href = loginUrl;
-            };
-          });
-          this.wpNotificationsService.handleErrorResponse(error);
-        };
-      });
+    });
   }
 
   protected createWorkPackage(projectIdentififer:string) {
