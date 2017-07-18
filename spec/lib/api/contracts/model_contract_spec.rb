@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
@@ -30,7 +29,7 @@
 require 'spec_helper'
 
 describe ModelContract do
-  let(:model) do
+  let(:model) {
     double('The model',
            child_attribute: nil,
            grand_child_attribute: nil,
@@ -38,7 +37,7 @@ describe ModelContract do
            changed: [],
            valid?: true,
            errors: ActiveModel::Errors.new(nil))
-  end
+  }
   let(:child_contract) { ChildContract.new(model) }
   let(:grand_child_contract) { GrandChildContract.new(model) }
 
@@ -84,8 +83,8 @@ describe ModelContract do
                                                                   'grand_child_attribute')
     end
 
-    it 'should not contain the same attribute twice, but also has the _id variant' do
-      expect(grand_child_contract.writable_attributes.count).to eq(6)
+    it 'should not contain the same attribute twice' do
+      expect(grand_child_contract.writable_attributes.count).to eq(3)
     end
 
     it 'should execute all the validations' do

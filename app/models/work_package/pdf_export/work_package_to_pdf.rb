@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -28,14 +27,14 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-class WorkPackage::PdfExport::WorkPackageToPdf < WorkPackage::Exporter::Base
+class WorkPackage::PdfExport::WorkPackageToPdf
   include WorkPackage::PdfExport::Common
 
-  attr_accessor :pdf
+  attr_accessor :work_package,
+                :pdf
 
   def initialize(work_package)
-    super
-
+    self.work_package = work_package
     self.pdf = get_pdf(current_language)
   end
 
@@ -46,7 +45,7 @@ class WorkPackage::PdfExport::WorkPackageToPdf < WorkPackage::Exporter::Base
     write_attachments!
     write_footers!
 
-    success(pdf.render)
+    pdf
   end
 
   def make_attribute_row(first_attribute, second_attribute)
@@ -76,8 +75,7 @@ class WorkPackage::PdfExport::WorkPackageToPdf < WorkPackage::Exporter::Base
   def make_attribute_cells(attribute, label_options: {}, value_options: {})
     label = pdf.make_cell(
       WorkPackage.human_attribute_name(attribute) + ':',
-      label_options
-    )
+      label_options)
 
     value_content = field_value work_package, attribute
     value = pdf.make_cell(value_content.to_s, value_options)
@@ -148,18 +146,10 @@ class WorkPackage::PdfExport::WorkPackageToPdf < WorkPackage::Exporter::Base
   end
 
   def write_title!
-    pdf.title = heading
+    pdf.title = "#{work_package.project} - ##{work_package.type} #{work_package.id}"
     pdf.font style: :bold, size: 11
-    pdf.text "#{heading}: #{work_package.subject}"
+    pdf.text "#{work_package.project} - #{work_package.type} # #{work_package.id}: #{work_package.subject}"
     pdf.move_down 20
-  end
-
-  def heading
-    "#{work_package.project} - ##{work_package.type} #{work_package.id}"
-  end
-
-  def title
-    "#{heading}.pdf"
   end
 
   def write_attributes!

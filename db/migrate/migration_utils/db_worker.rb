@@ -50,7 +50,7 @@ module Migration
     end
 
     def db_select_all(statement)
-      ActiveRecord::Base.connection.select_all(statement).to_a
+      ActiveRecord::Base.connection.select_all statement
     end
 
     def db_execute(statement)

@@ -1,5 +1,3 @@
-#-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -28,32 +26,24 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-module API
-  module Utilities
-    module RepresenterToJsonCache
-      def to_json(*)
-        if json_cacheable?
-          OpenProject::Cache.fetch(*json_representer_name_cache_key, *json_cache_key) do
-            super
-          end
-        else
-          super
-        end
+module OpenProject
+  module Patches
+    module Hash
+      ##
+      # Becomes obsolete with ruby 2.3's Hash#dig but until then this will do.
+      def dig(*keys)
+        keys.inject(self) { |hash, key| hash && (hash.is_a?(Hash) || nil) && hash[key] }
       end
 
-      def json_cacheable?
-        true
-      end
+      def map_values(&_block)
+        entries = map { |key, value| [key, (yield value)] }
 
-      def json_cache_key
-        raise NotImplementedError
-      end
-
-      private
-
-      def json_representer_name_cache_key
-        self.class.name.to_s.split('::') + ['json', I18n.locale]
+        ::Hash[entries]
       end
     end
   end
+end
+
+if !Hash.instance_methods.include? :dig
+  Hash.prepend OpenProject::Patches::Hash
 end

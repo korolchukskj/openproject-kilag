@@ -92,7 +92,7 @@ export class WorkPackageInlineCreateController {
     });
 
     // Remove temporary rows on creation of new work package
-    scopedObservable(this.$scope, this.wpCreate.onNewWorkPackage())
+    scopedObservable(this.$scope, this.wpCacheService.onNewWorkPackage())
       .subscribe((wp:WorkPackageResourceInterface) => {
 
         if (this.currentWorkPackage === wp) {
@@ -111,8 +111,14 @@ export class WorkPackageInlineCreateController {
       .takeUntil(scopeDestroyed$($scope)).subscribe(() => {
         const rowElement = this.$element.find(`.${inlineCreateRowClassName}`);
 
-        if (rowElement.length && this.currentWorkPackage) {
-          this.rowBuilder.refreshRow(this.currentWorkPackage, this.workPackageEditForm, rowElement);
+        if (rowElement.length) {
+          const data = {
+            element: rowElement[0],
+            object: this.currentWorkPackage,
+            workPackageId: 'new',
+            position: 0
+          };
+          this.rowBuilder.refreshRow(data as WorkPackageTableRow, this.workPackageEditForm);
         }
     });
 
@@ -146,7 +152,7 @@ export class WorkPackageInlineCreateController {
 
         this.workPackageEditForm = new WorkPackageEditForm('new');
         const row = this.rowBuilder.buildNew(wp, this.workPackageEditForm);
-        this.timelineBuilder.insert('new', this.table.timelineBody);
+        this.timelineBuilder.insert(wp, this.table.timelineBody);
         this.$element.append(row);
 
         this.$timeout(() => {
@@ -198,8 +204,8 @@ export class WorkPackageInlineCreateController {
     this.currentWorkPackage = null;
     this.states.editing.get('new').clear();
     this.states.workPackages.get('new').clear();
-    this.$element.find('.wp-row-new').remove();
-    jQuery(this.table.timelineBody).find('.wp-row-new-timeline').remove();
+    this.$element.find('#wp-row-new').remove();
+    jQuery(this.table.timelineBody).find('#wp-timeline-row-new').remove();
   }
 
   public showRow() {

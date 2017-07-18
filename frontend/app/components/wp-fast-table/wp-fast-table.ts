@@ -1,8 +1,5 @@
 import {WorkPackageCacheService} from '../work-packages/work-package-cache.service';
-import {
-  WorkPackageResource,
-  WorkPackageResourceInterface
-} from '../api/api-v3/hal-resources/work-package-resource.service';
+import {WorkPackageResource} from '../api/api-v3/hal-resources/work-package-resource.service';
 
 import {States} from '../states.service';
 import {injectorBridge} from '../angular/angular-injector-bridge.functions';
@@ -10,21 +7,21 @@ import {injectorBridge} from '../angular/angular-injector-bridge.functions';
 import {WorkPackageTableRow} from './wp-table.interfaces';
 import {TableHandlerRegistry} from './handlers/table-handler-registry';
 import {locateRow} from './helpers/wp-table-row-helpers';
-import {PlainRowsBuilder} from './builders/modes/plain/plain-rows-builder';
-import {GroupedRowsBuilder} from './builders/modes/grouped/grouped-rows-builder';
-import {HierarchyRowsBuilder} from './builders/modes/hierarchy/hierarchy-rows-builder';
-import {RowsBuilder} from './builders/modes/rows-builder';
-import {WorkPackageTimelineTableController} from '../wp-table/timeline/container/wp-timeline-container.directive';
-import {PrimaryRenderPass, RenderedRow} from './builders/primary-render-pass';
-import {debugLog} from '../../helpers/debug_output';
+import {PlainRowsBuilder} from "./builders/modes/plain/plain-rows-builder";
+import {GroupedRowsBuilder} from "./builders/modes/grouped/grouped-rows-builder";
+import {HierarchyRowsBuilder} from "./builders/modes/hierarchy/hierarchy-rows-builder";
+import {RowsBuilder} from "./builders/modes/rows-builder";
+import {WorkPackageTimelineTableController} from "../wp-table/timeline/container/wp-timeline-container.directive";
+import {TableRenderPass} from './builders/modes/table-render-pass';
+import {Subject} from 'rxjs';
 
 export class WorkPackageTable {
   public wpCacheService:WorkPackageCacheService;
   public states:States;
   public I18n:op.I18n;
 
-  public originalRows: string[] = [];
-  public originalRowIndex:{[id: string]: WorkPackageTableRow} = {};
+  public rows:string[] = [];
+  public rowIndex:{[id:string]:WorkPackageTableRow} = {};
 
   // WP rows builder
   // Ordered by priority
@@ -34,9 +31,6 @@ export class WorkPackageTable {
     new PlainRowsBuilder(this)
   ];
 
-  // Last render pass used for refreshing single rows
-  private lastRenderPass:PrimaryRenderPass|null = null;
-
   constructor(public container:HTMLElement,
               public tbody:HTMLElement,
               public timelineBody:HTMLElement,
@@ -45,14 +39,8 @@ export class WorkPackageTable {
     TableHandlerRegistry.attachTo(this);
   }
 
-  public get renderedRows() {
-    return this.states.table.rendered.getValueOr([]);
-  }
-
-  public findRenderedRow(classIdentifier:string):[number, RenderedRow] {
-    const index = _.findIndex(this.renderedRows, (row) => row.classIdentifier === classIdentifier);
-
-    return [index, this.renderedRows[index]];
+  public rowObject(workPackageId:string):WorkPackageTableRow {
+    return this.rowIndex[workPackageId];
   }
 
   public get rowBuilder():RowsBuilder {
@@ -64,10 +52,10 @@ export class WorkPackageTable {
    * @param rows
    */
   private buildIndex(rows:WorkPackageResource[]) {
-    this.originalRowIndex = {};
-    this.originalRows = rows.map((wp:WorkPackageResource, i:number) => {
+    this.rowIndex = {};
+    this.rows = rows.map((wp:WorkPackageResource, i:number) => {
       let wpId = wp.id;
-      this.originalRowIndex[wpId] = <WorkPackageTableRow> { object: wp, workPackageId: wpId, position: i };
+      this.rowIndex[wpId] = <WorkPackageTableRow> { object: wp, workPackageId: wpId, position: i };
       return wpId;
     });
   }
@@ -88,7 +76,7 @@ export class WorkPackageTable {
    * all elements.
    */
   public redrawTableAndTimeline() {
-    const renderPass = this.lastRenderPass = this.rowBuilder.buildRows();
+    const renderPass = this.rowBuilder.buildRows();
 
     // Insert table body
     this.tbody.innerHTML = '';
@@ -96,7 +84,7 @@ export class WorkPackageTable {
 
     // Insert timeline body
     this.timelineBody.innerHTML = '';
-    this.timelineBody.appendChild(renderPass.timeline.timelineBody);
+    this.timelineBody.appendChild(renderPass.timelineBody);
 
     this.states.table.rendered.putValue(renderPass.result);
   }
@@ -105,7 +93,7 @@ export class WorkPackageTable {
    * Redraw all elements in the table section only
    */
   public redrawTable() {
-    const renderPass = this.lastRenderPass = this.rowBuilder.buildRows();
+    const renderPass = this.rowBuilder.buildRows();
 
     this.tbody.innerHTML = '';
     this.tbody.appendChild(renderPass.tableBody);
@@ -114,22 +102,19 @@ export class WorkPackageTable {
   }
 
   /**
-   * Redraw single rows for a given work package being updated.
+   * Redraw a single row after structural changes
    */
-  public refreshRows(workPackage:WorkPackageResourceInterface) {
-    const pass = this.lastRenderPass;
-    if (!pass) {
-      debugLog('Trying to refresh a singular row without a previus render pass.');
-      return;
-    }
+  public refreshRow(row:WorkPackageTableRow) {
+    // Find the row we want to replace
+    let oldRow = row.element || locateRow(row.workPackageId);
+    let result = this.rowBuilder.refreshRow(row);
 
-    _.each(pass.renderedOrder, (row) => {
-      if (row.workPackage && row.workPackage.id === workPackage.id) {
-        debugLog(`Refreshing rendered row ${row.classIdentifier}`);
-        row.workPackage = workPackage;
-        pass.refresh(row, workPackage, this.tbody);
-      }
-    });
+    if (result !== null && oldRow && oldRow.parentNode) {
+      let [newRow, _hidden] = result;
+      oldRow.parentNode.replaceChild(newRow, oldRow);
+      row.element = newRow;
+      this.rowIndex[row.workPackageId] = row;
+    }
   }
 }
 

@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -64,7 +63,7 @@ module API
                exec_context: :decorator,
                render_nil: false
 
-      def self.self_link(path: nil, id_attribute: :id, title_getter: ->(*) { represented.name })
+      def self.self_link(path: nil, id_attribute: :id, title_getter: -> (*) { represented.name })
         link :self do
           self_path = self_v3_path(path, id_attribute)
 
@@ -79,8 +78,8 @@ module API
       def self.linked_property(property,
                                path: property,
                                getter: property,
-                               title_getter: ->(*) { call_or_send_to_represented(getter).name },
-                               show_if: ->(*) { true },
+                               title_getter: -> (*) { call_or_send_to_represented(getter).name },
+                               show_if: -> (*) { true },
                                embed_as: nil)
         link ::API::Utilities::PropertyNameConverter.from_ar_name(property) do
           next unless instance_eval(&show_if)
@@ -106,13 +105,13 @@ module API
         property_name = ::API::Utilities::PropertyNameConverter.from_ar_name(property)
         property property_name,
                  exec_context: :decorator,
-                 getter: ->(*) { call_or_send_to_represented(getter) },
+                 getter: -> (*) { call_or_send_to_represented(getter) },
                  embedded: true,
-                 decorator: ->(*) {
+                 decorator: -> (*) {
                    ::API::Utilities::DecoratorFactory.new(decorator: decorator,
                                                           current_user: current_user)
                  },
-                 if: ->(*) { embed_links && call_or_use(show_if) }
+                 if: -> (*) { embed_links && call_or_use(show_if) }
       end
 
       class_attribute :to_eager_load
@@ -122,8 +121,7 @@ module API
         current_user.allowed_to?(permission, context)
       end
 
-      # Override in subclasses to specify the JSON indicated "_type" of this representer
-      def _type; end
+      private
 
       def call_or_send_to_represented(callable_or_name)
         if callable_or_name.respond_to? :call
@@ -144,6 +142,9 @@ module API
       def datetime_formatter
         ::API::V3::Utilities::DateTimeFormatter
       end
+
+      # Override in subclasses to specify the JSON indicated "_type" of this representer
+      def _type; end
 
       # If a subclass does not depend on a model being passed to this class, it can override
       # this method and return false. Otherwise it will be enforced that the model of each

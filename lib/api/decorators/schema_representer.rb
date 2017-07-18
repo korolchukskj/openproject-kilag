@@ -216,6 +216,8 @@ module API
       property :_dependencies,
                exec_context: :decorator
 
+      private
+
       attr_accessor :form_embedded,
                     :self_link
 

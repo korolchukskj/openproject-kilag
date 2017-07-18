@@ -140,8 +140,12 @@ describe WorkPackages::BaseContract do
         work_package.start_date = Date.today + 2.days
       end
 
+      it 'is invalid' do
+        expect(contract).not_to be_valid
+      end
+
       it 'notes the error' do
-        contract.validate
+        contract.valid?
 
         message = I18n.t('activerecord.errors.models.work_package.attributes.start_date.violates_parent_relationships',
                          soonest_start: Date.today + 4.days)

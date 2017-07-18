@@ -25,20 +25,20 @@
 //
 // See doc/COPYRIGHT.rdoc for more details.
 // ++
-import {States} from '../../../states.service';
-import {RenderInfo} from '../wp-timeline';
-import {TimelineMilestoneCellRenderer} from './timeline-milestone-cell-renderer';
-import {TimelineCellRenderer} from './timeline-cell-renderer';
-import {WorkPackageTimelineTableController} from '../container/wp-timeline-container.directive';
-import {$injectFields} from '../../../angular/angular-injector-bridge.functions';
-import {WorkPackageTimelineCell} from './wp-timeline-cell';
-import {RenderedRow} from '../../../wp-fast-table/builders/primary-render-pass';
+import {States} from "../../../states.service";
+import {RenderInfo} from "../wp-timeline";
+import {TimelineMilestoneCellRenderer} from "./timeline-milestone-cell-renderer";
+import {TimelineCellRenderer} from "./timeline-cell-renderer";
+import {WorkPackageTimelineTableController} from "../container/wp-timeline-container.directive";
+import {$injectFields} from "../../../angular/angular-injector-bridge.functions";
+import {WorkPackageTimelineCell} from "./wp-timeline-cell";
+import {RenderedRow} from "../../../wp-fast-table/builders/modes/table-render-pass";
 
 export class WorkPackageTimelineCellsRenderer {
   // Injections
   public states:States;
 
-  public cells:{ [classIdentifier:string]:WorkPackageTimelineCell } = {};
+  public cells:{ [id:string]:WorkPackageTimelineCell } = {};
 
   private cellRenderers:{ milestone:TimelineMilestoneCellRenderer, generic:TimelineCellRenderer };
 
@@ -52,11 +52,7 @@ export class WorkPackageTimelineCellsRenderer {
   }
 
   public hasCell(wpId:string) {
-    return this.getCellsFor(wpId).length > 0;
-  }
-
-  public getCellsFor(wpId:string):WorkPackageTimelineCell[] {
-    return _.filter(this.cells, (cell) => cell.workPackageId === wpId) || [];
+    return !!this.cells[wpId];
   }
 
   /**
@@ -70,8 +66,10 @@ export class WorkPackageTimelineCellsRenderer {
     _.each(this.cells, (cell) => this.refreshSingleCell(cell));
   }
 
-  public refreshCellsFor(wpId:string) {
-    _.each(this.getCellsFor(wpId), (cell) => this.refreshSingleCell(cell));
+  public refreshCellFor(wpId:string) {
+    if (this.hasCell(wpId)) {
+      this.refreshSingleCell(this.cells[wpId]);
+    }
   }
 
   public refreshSingleCell(cell:WorkPackageTimelineCell) {
@@ -93,43 +91,33 @@ export class WorkPackageTimelineCellsRenderer {
     const newCells:string[] = [];
 
     _.each(this.wpTimeline.workPackageIdOrder, (renderedRow:RenderedRow) => {
-      const wpId = renderedRow.workPackageId;
 
       // Ignore extra rows not tied to a work package
+      const wpId = renderedRow.workPackageId;
       if (!wpId) {
         return;
       }
 
-      const state = this.states.workPackages.get(wpId);
-      if (state.isPristine()) {
-        return;
-      }
-
-      // As work packages may occur several times, get the unique identifier
-      // to identify the cell
-      const identifier = renderedRow.classIdentifier;
-
       // Create a cell unless we already have an active cell
-      if (!this.cells[identifier]) {
-        this.cells[identifier] = this.buildCell(identifier, wpId.toString());
+      if (!this.hasCell(wpId)) {
+        this.cells[wpId] = this.buildCell(wpId);
       }
 
-      newCells.push(identifier);
+      newCells.push(wpId);
     });
 
-    _.difference(currentlyActive, newCells).forEach((identifier:string) => {
-      this.cells[identifier].clear();
-      delete this.cells[identifier];
+    _.difference(currentlyActive, newCells).forEach((wpId:string) => {
+      this.cells[wpId].clear();
+      delete this.cells[wpId];
     });
   }
 
-  private buildCell(classIdentifier:string, workPackageId:string) {
+  private buildCell(wpId:string) {
     return new WorkPackageTimelineCell(
       this.wpTimeline,
       this.cellRenderers,
-      this.renderInfoFor(workPackageId),
-      classIdentifier,
-      workPackageId
+      this.renderInfoFor(wpId),
+      wpId
     );
   }
 

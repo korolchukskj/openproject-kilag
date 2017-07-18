@@ -28,13 +28,10 @@
 
 import {SchemaResource, SchemaAttributeObject} from './schema-resource.service';
 import {CollectionResource} from './collection-resource.service';
-import {QueryColumn} from '../../../wp-query/query-column';
-import {QuerySortByResource} from './query-sort-by-resource.service';
-import {QueryGroupByResource} from './query-group-by-resource.service';
 
 export interface QuerySchemaResourceInterface extends SchemaResource {
-  columns:{ allowedValues: QueryColumn[] };
+  columns: SchemaAttributeObject;
   filtersSchemas: CollectionResource;
-  sortBy:{ allowedValues: QuerySortByResource[] };
-  groupBy:{ allowedValues: QueryGroupByResource[] };
+  sortBy: SchemaAttributeObject;
+  groupBy: SchemaAttributeObject;
 }

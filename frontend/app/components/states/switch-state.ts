@@ -16,19 +16,15 @@ export class SwitchState<StateName> {
     return (this.contextSwitch$.value !== to);
   }
 
-  public get current():StateName|undefined {
-    return this.contextSwitch$.value;
-  }
-
   public reset(reason?: string) {
     debugLog('Resetting table context.');
     this.contextSwitch$.clear(reason);
   }
 
-  public doAndTransition(context: StateName, callback:() => PromiseLike<any>) {
+  public doAndTransition(context: StateName, callback:() => any) {
     this.reset('Clearing before transitioning to ' + context);
-    const promise = callback();
-    promise.then(() => this.transition(context));
+    callback();
+    this.transition(context);
   }
 
   public fireOnTransition<T>(cb: State<T>, ...context: StateName[]): State<T> {

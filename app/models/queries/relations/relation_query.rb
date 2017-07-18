@@ -34,7 +34,7 @@ module Queries
       end
 
       def default_scope
-        Relation.visible
+        Relation.all
       end
     end
   end

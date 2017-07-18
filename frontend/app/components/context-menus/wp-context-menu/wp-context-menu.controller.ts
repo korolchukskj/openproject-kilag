@@ -34,12 +34,10 @@ import {
   WorkPackageResourceInterface
 } from "../../api/api-v3/hal-resources/work-package-resource.service";
 import {WorkPackageRelationsHierarchyService} from "../../wp-relations/wp-relations-hierarchy/wp-relations-hierarchy.service";
-import {States} from '../../states.service';
 
 function wpContextMenuController($scope:any,
                                  $rootScope:ng.IRootScopeService,
                                  $state:ng.ui.IStateService,
-                                 states:States,
                                  WorkPackageContextMenuHelper:any,
                                  WorkPackageService:any,
                                  wpRelationsHierarchyService:WorkPackageRelationsHierarchyService,
@@ -51,10 +49,8 @@ function wpContextMenuController($scope:any,
 
   $scope.I18n = I18n;
 
-  const wpId = $scope.workPackageId;
-  const workPackage = states.workPackages.get(wpId).value!;
-  if (!wpTableSelection.isSelected(wpId)) {
-    wpTableSelection.setSelection(wpId, $scope.rowIndex);
+  if (!wpTableSelection.isSelected($scope.row.object.id)) {
+    wpTableSelection.setSelection($scope.row);
   }
 
   $scope.permittedActions = WorkPackageContextMenuHelper.getPermittedActions(getSelectedWorkPackages(), PERMITTED_CONTEXT_MENU_ACTIONS);
@@ -64,6 +60,9 @@ function wpContextMenuController($scope:any,
   };
 
   $scope.triggerContextMenuAction = function (action:any, link:any) {
+    let table:WorkPackageTable;
+    let wp:WorkPackageResourceInterface;
+
     switch (action) {
       case 'delete':
         deleteSelectedWorkPackages();
@@ -78,15 +77,20 @@ function wpContextMenuController($scope:any,
         break;
 
       case 'relation-precedes':
-        $scope.table.timelineController.startAddRelationPredecessor(workPackage);
+        table = $scope.table;
+        wp = $scope.row.object;
+        table.timelineController.startAddRelationPredecessor(wp);
         break;
 
       case 'relation-follows':
-        $scope.table.timelineController.startAddRelationFollower(workPackage);
+        table = $scope.table;
+        wp = $scope.row.object;
+        table.timelineController.startAddRelationFollower(wp);
         break;
 
       case 'relation-new-child':
-        wpRelationsHierarchyService.addNewChildWp(workPackage);
+        wp = $scope.row.object;
+        wpRelationsHierarchyService.addNewChildWp(wp);
         break;
 
       default:
@@ -141,14 +145,15 @@ function wpContextMenuController($scope:any,
   }
 
   function getSelectedWorkPackages() {
+    let workPackagefromContext = $scope.row.object;
     let selectedWorkPackages = wpTableSelection.getSelectedWorkPackages();
 
     if (selectedWorkPackages.length === 0) {
-      return [workPackage];
+      return [workPackagefromContext];
     }
 
-    if (selectedWorkPackages.indexOf(workPackage) === -1) {
-      selectedWorkPackages.push(workPackage);
+    if (selectedWorkPackages.indexOf(workPackagefromContext) === -1) {
+      selectedWorkPackages.push(workPackagefromContext);
     }
 
     return selectedWorkPackages;

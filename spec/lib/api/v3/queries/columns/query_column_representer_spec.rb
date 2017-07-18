@@ -28,11 +28,10 @@
 
 require 'spec_helper'
 
-describe ::API::V3::Queries::Columns::QueryRelationToTypeColumnRepresenter, clear_cache: true do
+describe ::API::V3::Queries::Columns::QueryColumnRepresenter do
   include ::API::V3::Utilities::PathHelper
 
-  let(:type) { FactoryGirl.build_stubbed(:type) }
-  let(:column) { Queries::WorkPackages::Columns::RelationToTypeColumn.new(type) }
+  let(:column) { Query.available_columns.detect { |column| column.name == :status } }
   let(:representer) { described_class.new(column) }
 
   subject { representer.to_json }
@@ -41,77 +40,50 @@ describe ::API::V3::Queries::Columns::QueryRelationToTypeColumnRepresenter, clea
     describe '_links' do
       it_behaves_like 'has a titled link' do
         let(:link) { 'self' }
-        let(:href) { api_v3_paths.query_column "relationsToType#{type.id}" }
-        let(:title) { "Relations to #{type.name}" }
-      end
-
-      it_behaves_like 'has a titled link' do
-        let(:link) { 'type' }
-        let(:href) { api_v3_paths.type type.id }
-        let(:title) { type.name }
+        let(:href) { api_v3_paths.query_column 'status' }
+        let(:title) { 'Status' }
       end
     end
 
-    it 'has _type QueryColumn::RelationToType' do
+    it 'has _type QueryColumn' do
       is_expected
-        .to be_json_eql('QueryColumn::RelationToType'.to_json)
+        .to be_json_eql('QueryColumn'.to_json)
         .at_path('_type')
     end
 
     it 'has id attribute' do
       is_expected
-        .to be_json_eql("relationsToType#{type.id}".to_json)
+        .to be_json_eql('status'.to_json)
         .at_path('id')
     end
 
     it 'has name attribute' do
       is_expected
-        .to be_json_eql("Relations to #{type.name}".to_json)
+        .to be_json_eql('Status'.to_json)
         .at_path('name')
     end
-  end
 
-  describe 'caching' do
-    before do
-      # fill the cache
-      representer.to_json
-    end
+    context 'for a translated column' do
+      let(:column) { Query.available_columns.detect { |column| column.name == :assigned_to } }
 
-    it 'is cached' do
-      expect(representer)
-        .not_to receive(:to_hash)
+      describe '_links' do
+        it_behaves_like 'has a titled link' do
+          let(:link) { 'self' }
+          let(:href) { api_v3_paths.query_column 'assignee' }
+          let(:title) { 'Assignee' }
+        end
+      end
 
-      representer.to_json
-    end
+      it 'has id attribute' do
+        is_expected
+          .to be_json_eql('assignee'.to_json)
+          .at_path('id')
+      end
 
-    it 'busts the cache on changes to the name' do
-      allow(column)
-        .to receive(:name)
-        .and_return('blubs')
-
-      expect(representer)
-        .to receive(:to_hash)
-
-      representer.to_json
-    end
-
-    it 'busts the cache on changes to the type' do
-      allow(type)
-        .to receive(:cache_key)
-        .and_return('a_different_one')
-
-      expect(representer)
-        .to receive(:to_hash)
-
-      representer.to_json
-    end
-
-    it 'busts the cache on changes to the locale' do
-      expect(representer)
-        .to receive(:to_hash)
-
-      I18n.with_locale(:de) do
-        representer.to_json
+      it 'has name attribute' do
+        is_expected
+          .to be_json_eql('Assignee'.to_json)
+          .at_path('name')
       end
     end
   end

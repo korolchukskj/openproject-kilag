@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -55,70 +54,66 @@ module API
         end
 
         link :updateImmediately do
-          next unless current_user_is_admin
           {
             href: api_v3_paths.user(represented.id),
             title: "Update #{represented.login}",
             method: :patch
-          }
+          } if current_user_is_admin
         end
 
         link :lock do
-          next unless current_user_is_admin && represented.lockable?
           {
             href: api_v3_paths.user_lock(represented.id),
             title: "Set lock on #{represented.login}",
             method: :post
-          }
+          } if current_user_is_admin && represented.lockable?
         end
 
         link :unlock do
-          next unless current_user_is_admin && represented.activatable?
           {
             href: api_v3_paths.user_lock(represented.id),
             title: "Remove lock on #{represented.login}",
             method: :delete
-          }
+          } if current_user_is_admin && represented.activatable?
         end
 
         link :delete do
-          next unless current_user_can_delete_represented?
           {
             href: api_v3_paths.user(represented.id),
             title: "Delete #{represented.login}",
             method: :delete
-          }
+          } if current_user_can_delete_represented?
         end
 
         property :id,
                  render_nil: true
         property :login,
-                 exec_context: :decorator,
                  render_nil: false,
                  getter: ->(*) { represented.login },
-                 setter: ->(fragment:, represented:, **) { represented.login = fragment },
+                 setter: ->(value, *) { represented.login = value },
+                 exec_context: :decorator,
                  if: ->(*) { current_user_is_admin_or_self }
         property :admin,
-                 exec_context: :decorator,
                  render_nil: false,
+                 exec_context: :decorator,
                  getter: ->(*) {
                    represented.admin?
                  },
-                 setter: ->(fragment:, represented:, **) { represented.admin = fragment },
+                 setter: ->(value, *) { represented.admin = value },
                  if: ->(*) { current_user_is_admin }
         property :subtype,
-                 getter: ->(*) { type },
+                 getter: -> (*) { type },
                  render_nil: true
         property :firstName,
-                 exec_context: :decorator,
                  getter: ->(*) { represented.firstname },
-                 setter: ->(fragment:, represented:, **) { represented.firstname = fragment },
+                 setter: ->(value, *) { represented.firstname = value },
+                 exec_context: :decorator,
                  render_nil: false,
                  if: ->(*) { current_user_is_admin_or_self }
         property :lastName,
-                 exec_context: :decorator,
                  getter: ->(*) { represented.lastname },
-                 setter: ->(fragment:, represented:, **) { represented.lastname = fragment },
+                 setter: ->(value, *) { represented.lastname = value },
+                 exec_context: :decorator,
                  render_nil: false,
                  if: ->(*) { current_user_is_admin_or_self }
         property :name,
@@ -133,50 +128,48 @@ module API
                    end
                  }
         property :avatar,
-                 exec_context: :decorator,
-                 getter: ->(*) { avatar_url(represented) },
-                 render_nil: true
+                 getter: -> (*) { avatar_url(represented) },
+                 render_nil: true,
+                 exec_context: :decorator
         property :created_on,
-                 exec_context: :decorator,
                  as: 'createdAt',
-                 getter: ->(*) { datetime_formatter.format_datetime(represented.created_on) },
+                 exec_context: :decorator,
+                 getter: -> (*) { datetime_formatter.format_datetime(represented.created_on) },
                  render_nil: false,
                  if: ->(*) { current_user_is_admin_or_self }
         property :updated_on,
-                 exec_context: :decorator,
                  as: 'updatedAt',
-                 getter: ->(*) { datetime_formatter.format_datetime(represented.updated_on) },
+                 exec_context: :decorator,
+                 getter: -> (*) { datetime_formatter.format_datetime(represented.updated_on) },
                  render_nil: false,
                  if: ->(*) { current_user_is_admin_or_self }
         property :status,
-                 getter: ->(*) { status_name },
-                 setter: ->(fragment:, represented:, **) { represented.status = User::STATUSES[fragment.to_sym] },
+                 getter: -> (*) { status_name },
+                 setter: -> (value, *) { self.status = User::STATUSES[value.to_sym] },
                  render_nil: true
 
         link :auth_source do
-          next unless represented.is_a?(User) && represented.auth_source && current_user.admin?
-
           {
             href: "/api/v3/auth_sources/#{represented.auth_source_id}",
             title: represented.auth_source.name
-          }
+          } if represented.is_a?(User) && represented.auth_source && current_user.admin?
         end
 
         property :identity_url,
-                 exec_context: :decorator,
                  as: 'identityUrl',
-                 getter: ->(*) { represented.identity_url },
-                 setter: ->(fragment:, represented:, **) { represented.identity_url = fragment },
+                 exec_context: :decorator,
+                 getter: -> (*) { represented.identity_url },
+                 setter: -> (value, *) { represented.identity_url = value },
                  render_nil: true,
                  if: ->(*) { represented.is_a?(User) && current_user_is_admin_or_self }
 
         # Write-only properties
 
         property :password,
-                 getter: ->(*) { nil },
+                 getter: -> (*) { nil },
                  render_nil: false,
-                 setter: ->(fragment:, represented:, **) {
-                   represented.password = represented.password_confirmation = fragment
+                 setter: -> (value, *) {
+                   self.password = self.password_confirmation = value
                  }
 
         ##

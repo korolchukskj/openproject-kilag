@@ -45,10 +45,10 @@ function focusWithinDirective($timeout:ng.ITimeoutService) {
 
       scopedObservable(
           scope,
-          focusedObservable
+          focusedObservable.delay(50)
         )
-        .auditTime(50)
-        .subscribe(focused => {
+        .filter(delayed => delayed === focusedObservable.getValue())
+        .subscribe((focused) => {
            element.toggleClass('-focus', focused);
         });
 

@@ -22,8 +22,8 @@ export class GroupedRenderPass extends PlainRenderPass {
    */
   protected doRender() {
     let currentGroup:GroupObject | null = null;
-    this.workPackageTable.originalRows.forEach((wpId:string) => {
-      let row = this.workPackageTable.originalRowIndex[wpId];
+    this.workPackageTable.rows.forEach((wpId:string) => {
+      let row = this.workPackageTable.rowIndex[wpId];
       let nextGroup = this.matchingGroup(row.object);
 
       if (nextGroup && currentGroup !== nextGroup) {
@@ -91,17 +91,14 @@ export class GroupedRenderPass extends PlainRenderPass {
     const group = row.group!;
     const hidden = group.collapsed;
 
-    let additionalClasses:string[] = [];
-
     let [tr, _] = this.rowBuilder.buildEmpty(row.object);
-    additionalClasses.push(groupedRowClassName(group.index as number));
+    tr.classList.add(groupedRowClassName(group.index as number));
 
     if (hidden) {
-      additionalClasses.push(collapsedRowClass);
+      tr.classList.add(collapsedRowClass);
     }
 
     row.element = tr;
-    tr.classList.add(...additionalClasses);
-    this.appendRow(row.object, tr, additionalClasses, hidden);
+    this.appendRow(row.object, tr, [groupedRowClassName(group.index as number)], hidden);
   }
 }

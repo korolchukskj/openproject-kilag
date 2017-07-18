@@ -41,11 +41,6 @@ module Components
         end
       end
 
-      def open_and_choose(name)
-        open!
-        choose(name)
-      end
-
       def open!
         click_on 'work-packages-settings-button'
         expect_open

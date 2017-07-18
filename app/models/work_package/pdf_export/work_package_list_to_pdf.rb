@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -28,16 +27,24 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-class WorkPackage::PdfExport::WorkPackageListToPdf < WorkPackage::Exporter::Base
+class WorkPackage::PdfExport::WorkPackageListToPdf
   include WorkPackage::PdfExport::Common
 
-  attr_accessor :pdf,
+  attr_accessor :work_packages,
+                :pdf,
+                :project,
+                :query,
+                :results,
                 :options
 
-  def initialize(object, options = {})
-    super
-
+  def initialize(work_packages, project, query, results, options = {})
     @cell_padding = options.delete(:cell_padding)
+
+    self.work_packages = work_packages
+    self.project = project
+    self.query = query
+    self.results = results
+    self.options = options
 
     self.pdf = get_pdf(current_language)
 
@@ -51,27 +58,17 @@ class WorkPackage::PdfExport::WorkPackageListToPdf < WorkPackage::Exporter::Base
 
     write_footers!
 
-    success(pdf.render)
-  rescue Prawn::Errors::CannotFit
-    error(I18n.t(:error_pdf_export_too_many_columns))
-  end
-
-  def project
-    query.project
+    pdf
   end
 
   def write_title!
-    pdf.title = heading
+    pdf.title = title
     pdf.font style: :bold, size: 11
-    pdf.text heading
+    pdf.text title
     pdf.move_down 20
   end
 
   def title
-    "#{heading}.pdf"
-  end
-
-  def heading
     title = query.new_record? ? I18n.t(:label_work_package_plural) : query.name
 
     if project
@@ -97,7 +94,7 @@ class WorkPackage::PdfExport::WorkPackageListToPdf < WorkPackage::Exporter::Base
   end
 
   def column_widths
-    widths = valid_export_columns.map do |col|
+    widths = query.columns.map do |col|
       if col.name == :subject || text_column?(col)
         4.0
       else
@@ -110,11 +107,11 @@ class WorkPackage::PdfExport::WorkPackageListToPdf < WorkPackage::Exporter::Base
   end
 
   def description_colspan
-    valid_export_columns.size
+    query.columns.size
   end
 
   def text_column?(column)
-    column.is_a?(Queries::WorkPackages::Columns::CustomFieldColumn) &&
+    column.is_a?(QueryCustomFieldColumn) &&
       ['string', 'text'].include?(column.custom_field.field_format)
   end
 
@@ -123,7 +120,7 @@ class WorkPackage::PdfExport::WorkPackageListToPdf < WorkPackage::Exporter::Base
   end
 
   def data_headers
-    valid_export_columns.map(&:caption).map do |caption|
+    query.columns.map(&:caption).map do |caption|
       pdf.make_cell caption, font_style: :bold, background_color: 'CCCCCC'
     end
   end
@@ -132,7 +129,7 @@ class WorkPackage::PdfExport::WorkPackageListToPdf < WorkPackage::Exporter::Base
     previous_group = nil
 
     work_packages.flat_map do |work_package|
-      values = valid_export_columns.map do |column|
+      values = query.columns.map do |column|
         make_column_value work_package, column
       end
 
@@ -150,7 +147,7 @@ class WorkPackage::PdfExport::WorkPackageListToPdf < WorkPackage::Exporter::Base
 
         result.insert 0, [
           pdf.make_cell(label, font_style: :bold,
-                               colspan: valid_export_columns.size,
+                               colspan: query.columns.size,
                                background_color: 'DDDDDD')
         ]
       end
@@ -160,7 +157,7 @@ class WorkPackage::PdfExport::WorkPackageListToPdf < WorkPackage::Exporter::Base
   end
 
   def make_column_value(work_package, column)
-    if column.is_a?(Queries::WorkPackages::Columns::CustomFieldColumn)
+    if column.is_a?(QueryCustomFieldColumn)
       make_custom_field_value work_package, column
     else
       make_field_value work_package, column.name

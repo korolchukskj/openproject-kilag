@@ -60,7 +60,7 @@ describe('WorkPackageCacheService', () => {
   }));
 
   it('should return a work package after the list has been initialized', function(done:any) {
-    wpCacheService.updateWorkPackageList(dummyWorkPackages as any);
+    wpCacheService.updateWorkPackageList(dummyWorkPackages);
 
     let workPackage: WorkPackageResource;
     scopedObservable($rootScope, wpCacheService.loadWorkPackage('1').values$())

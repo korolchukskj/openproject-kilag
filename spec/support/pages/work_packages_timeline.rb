@@ -43,10 +43,6 @@ module Pages
       '.work-packages-tabletimeline--timeline-side'
     end
 
-    def expect_row_count(num)
-      expect(page).to have_selector('.wp-timeline-cell', count: num)
-    end
-
     def expect_work_package_listed(*work_packages)
       super(*work_packages)
 
@@ -95,7 +91,7 @@ module Pages
 
     def expect_timeline_element(work_package)
       type = work_package.milestone? ? :milestone : :bar
-      expect(page).to have_selector(".wp-row-#{work_package.id}-timeline .timeline-element.#{type}")
+      expect(page).to have_selector("#{timeline_row_selector(work_package.id)} .timeline-element.#{type}")
     end
 
     def expect_timeline_relation(from, to)
@@ -117,7 +113,7 @@ module Pages
     end
 
     def expect_hidden_row(work_package)
-      expect(page).to have_selector(".wp-row-#{work_package.id}-timeline", visible: :hidden)
+      expect(page).to have_selector("#wp-timeline-row-#{work_package.id}", visible: :hidden)
     end
   end
 end

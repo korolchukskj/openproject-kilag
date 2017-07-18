@@ -25,27 +25,26 @@
 //
 // See doc/COPYRIGHT.rdoc for more details.
 // ++
+import * as angular from 'angular';
 import {openprojectModule} from '../../../../angular-modules';
 import {scopeDestroyed$} from '../../../../helpers/angular-rx-utils';
-import {debugLog, timeOutput} from '../../../../helpers/debug_output';
+import {debugLog} from '../../../../helpers/debug_output';
 import {TypeResource} from '../../../api/api-v3/hal-resources/type-resource.service';
 import {WorkPackageResourceInterface} from '../../../api/api-v3/hal-resources/work-package-resource.service';
 import {States} from '../../../states.service';
+import {WorkPackageStates} from '../../../work-package-states.service';
 import {WorkPackageNotificationService} from '../../../wp-edit/wp-notification.service';
-import {WorkPackageTableTimelineService} from '../../../wp-fast-table/state/wp-table-timeline.service';
-import {WorkPackageTableTimelineState} from '../../../wp-fast-table/wp-table-timeline';
-import {WorkPackagesTableController} from '../../wp-table.directive';
-import {timelineMarkerSelectionStartClass, TimelineViewParameters} from '../wp-timeline';
-import {WorkPackageTable} from '../../../wp-fast-table/wp-fast-table';
+import {RenderedRow} from '../../../wp-fast-table/builders/modes/table-render-pass';
 import {WorkPackageTableHierarchiesService} from '../../../wp-fast-table/state/wp-table-hierarchy.service';
-
-import {selectorTimelineSide} from '../../wp-table-scroll-sync';
-import {WorkPackageTimelineCellsRenderer} from '../cells/wp-timeline-cells-renderer';
-import {WorkPackageTimelineCell} from '../cells/wp-timeline-cell';
+import {WorkPackageTableTimelineService} from '../../../wp-fast-table/state/wp-table-timeline.service';
+import {WorkPackageTable} from '../../../wp-fast-table/wp-fast-table';
+import {WorkPackageTableTimelineState} from '../../../wp-fast-table/wp-table-timeline';
 import {WorkPackageRelationsService} from '../../../wp-relations/wp-relations.service';
-import {Moment} from "moment";
-import {RenderedRow} from '../../../wp-fast-table/builders/primary-render-pass';
-
+import {selectorTimelineSide} from '../../wp-table-scroll-sync';
+import {WorkPackagesTableController} from '../../wp-table.directive';
+import {WorkPackageTimelineCell} from '../cells/wp-timeline-cell';
+import {WorkPackageTimelineCellsRenderer} from '../cells/wp-timeline-cells-renderer';
+import {timelineMarkerSelectionStartClass, TimelineViewParameters} from '../wp-timeline';
 
 export class WorkPackageTimelineTableController {
 
@@ -64,7 +63,6 @@ export class WorkPackageTimelineTableController {
   private cellsRenderer = new WorkPackageTimelineCellsRenderer(this);
 
   public outerContainer:JQuery;
-
   public timelineBody:JQuery;
 
   private selectionParams = {
@@ -82,6 +80,7 @@ export class WorkPackageTimelineTableController {
               private wpTableTimeline:WorkPackageTableTimelineService,
               private wpNotificationsService:WorkPackageNotificationService,
               private wpRelations:WorkPackageRelationsService,
+              private wpStates:WorkPackageStates,
               private wpTableHierarchies:WorkPackageTableHierarchiesService,
               private I18n:op.I18n) {
     'ngInject';
@@ -116,9 +115,9 @@ export class WorkPackageTimelineTableController {
     this.states.table.rendered.values$()
       .takeUntil(this.states.table.stopAllSubscriptions)
       .filter(() => this.initialized)
+      .map(rendered => rendered.renderedOrder)
       .subscribe((orderedRows) => {
-        // Remember all visible rows in their order of appearance.
-        this.workPackageIdOrder = orderedRows.filter(row => !row.hidden);
+        this.workPackageIdOrder = orderedRows;
         this.refreshView();
       });
 
@@ -147,17 +146,8 @@ export class WorkPackageTimelineTableController {
     return this.cellsRenderer.hasCell(wpId);
   }
 
-  workPackageCells(wpId:string):WorkPackageTimelineCell[] {
-    return this.cellsRenderer.getCellsFor(wpId);
-  }
-
-  /**
-   * Return the index of a given row by its class identifier
-   * @param cell
-   * @return {number}
-   */
-  workPackageIndex(classIdentifier:string):number {
-    return this.workPackageIdOrder.findIndex((el) => el.classIdentifier === classIdentifier);
+  workPackageCell(wpId:string):WorkPackageTimelineCell {
+    return this.cellsRenderer.cells[wpId];
   }
 
   onRefreshRequested(name:string, callback:(vp:TimelineViewParameters) => void) {
@@ -166,10 +156,6 @@ export class WorkPackageTimelineTableController {
 
   getAbsoluteLeftCoordinates():number {
     return this.$element.offset().left;
-  }
-
-  getParentScrollContainer() {
-    return this.outerContainer.closest(selectorTimelineSide)[0];
   }
 
   get viewParameters():TimelineViewParameters {
@@ -190,25 +176,25 @@ export class WorkPackageTimelineTableController {
       return;
     }
 
-    timeOutput("refreshView() in timeline container", () => {
-      // Reset the width of the outer container if its content shrinks
-      this.outerContainer.css('width', 'auto');
+    debugLog('refreshView() in timeline container');
 
-      this.calculateViewParams(this._viewParameters);
+    // Reset the width of the outer container if its content shrinks
+    this.outerContainer.css('width', 'auto');
 
-      // Update all cells
-      this.cellsRenderer.refreshAllCells();
+    this.calculateViewParams(this._viewParameters);
 
-      _.each(this.renderers, (cb, key) => {
-        debugLog(`Refreshing timeline member ${key}`);
-        cb(this._viewParameters);
-      });
+    // Update all cells
+    this.cellsRenderer.refreshAllCells();
 
-      // Calculate overflowing width to set to outer container
-      // required to match width in all child divs
-      const currentWidth = this.getParentScrollContainer().scrollWidth;
-      this.outerContainer.width(currentWidth);
+    _.each(this.renderers, (cb, key) => {
+      debugLog(`Refreshing timeline member ${key}`);
+      cb(this._viewParameters);
     });
+
+    // Calculate overflowing width to set to outer container
+    // required to match width in all child divs
+    const currentWidth = this.outerContainer.closest(selectorTimelineSide)[0].scrollWidth;
+    this.outerContainer.width(currentWidth);
   }
 
   updateOnWorkPackageChanges() {
@@ -224,41 +210,25 @@ export class WorkPackageTimelineTableController {
           this.debouncedRefresh();
         } else {
           // Refresh the single cell
-          this.cellsRenderer.refreshCellsFor(wpId);
+          this.cellsRenderer.refreshCellFor(wpId);
         }
       });
   }
 
   startAddRelationPredecessor(start:WorkPackageResourceInterface) {
     this.activateSelectionMode(start.id, end => {
-      this.wpRelations
-        .addCommonRelation(start as any, "follows", end.id)
+      this.wpStates
+        .addCommonRelation(start as any, 'follows', end.id)
         .catch((error:any) => this.wpNotificationsService.handleErrorResponse(error, end));
     });
   }
 
   startAddRelationFollower(start:WorkPackageResourceInterface) {
     this.activateSelectionMode(start.id, end => {
-      this.wpRelations
-        .addCommonRelation(start as any, "precedes", end.id)
+      this.wpStates
+        .addCommonRelation(start as any, 'precedes', end.id)
         .catch((error:any) => this.wpNotificationsService.handleErrorResponse(error, end));
     });
-  }
-
-  getFirstDayInViewport() {
-    const outerContainer = this.getParentScrollContainer();
-    const scrollLeft = outerContainer.scrollLeft;
-    const nonVisibleDaysLeft = Math.floor(scrollLeft / this.viewParameters.pixelPerDay);
-    return this.viewParameters.dateDisplayStart.clone().add(nonVisibleDaysLeft, "days");
-  }
-
-  getLastDayInViewport() {
-    const outerContainer = this.getParentScrollContainer();
-    const scrollLeft = outerContainer.scrollLeft;
-    const width = outerContainer.offsetWidth;
-    const viewPortRight = scrollLeft + width;
-    const daysUntilViewPortEnds = Math.ceil(viewPortRight / this.viewParameters.pixelPerDay) + 1;
-    return this.viewParameters.dateDisplayStart.clone().add(daysUntilViewPortEnds, "days");
   }
 
   private resetSelectionMode() {
@@ -303,12 +273,16 @@ export class WorkPackageTimelineTableController {
       const wpId = renderedRow.workPackageId;
 
       // Not all rendered rows are work packages
-      if (!wpId || this.states.workPackages.get(wpId).isPristine()) {
+      if (!wpId) {
         return;
       }
 
       // We may still have a reference to a row that, e.g., just got deleted
-      const workPackage = this.states.workPackages.get(wpId).value!;
+      const workPackage = this.states.workPackages.get(wpId).value;
+      if (!workPackage) {
+        return;
+      }
+
       const startDate = workPackage.startDate ? moment(workPackage.startDate) : currentParams.now;
       const dueDate = workPackage.dueDate ? moment(workPackage.dueDate) : currentParams.now;
       const date = workPackage.date ? moment(workPackage.date) : currentParams.now;
@@ -350,12 +324,6 @@ export class WorkPackageTimelineTableController {
       changed = true;
       this._viewParameters.dateDisplayEnd = newParams.dateDisplayEnd;
     }
-
-    // Calculate the visible viewport
-    const firstDayInViewport = this.getFirstDayInViewport();
-    const lastDayInViewport = this.getLastDayInViewport();
-    const viewport: [Moment, Moment] = [firstDayInViewport, lastDayInViewport];
-    this._viewParameters.visibleViewportAtCalculationTime = viewport;
 
     return changed;
   }

@@ -26,7 +26,10 @@
 // See doc/COPYRIGHT.rdoc for more details.
 // ++
 
-import {QueryResource} from '../api/api-v3/hal-resources/query-resource.service';
+import {
+  QueryResource,
+  QueryColumn
+} from '../api/api-v3/hal-resources/query-resource.service';
 import {QueryFormResource} from '../api/api-v3/hal-resources/query-form-resource.service';
 import {QuerySortByResource} from '../api/api-v3/hal-resources/query-sort-by-resource.service';
 import {QueryGroupByResource} from '../api/api-v3/hal-resources/query-group-by-resource.service';
@@ -34,7 +37,6 @@ import {SchemaResource} from '../api/api-v3/hal-resources/schema-resource.servic
 import {QueryFilterResource} from '../api/api-v3/hal-resources/query-filter-resource.service';
 import {QueryFilterInstanceResource} from '../api/api-v3/hal-resources/query-filter-instance-resource.service';
 import {QueryFilterInstanceSchemaResource} from '../api/api-v3/hal-resources/query-filter-instance-schema-resource.service';
-import {QueryColumn} from '../wp-query/query-column';
 
 export class WorkPackagesListInvalidQueryService {
   constructor(protected QueryResource:QueryResource,

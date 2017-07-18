@@ -4,7 +4,7 @@ import {WorkPackageTable} from '../../wp-fast-table';
 import {States} from '../../../states.service';
 import {TableEventHandler} from '../table-handler-registry';
 import {WorkPackageTableSelection} from '../../state/wp-table-selection.service';
-import {tableRowClassName} from '../../builders/rows/single-row-builder';
+import {rowClassName} from '../../builders/rows/single-row-builder';
 import {tdClassName} from '../../builders/cell-builder';
 
 export class RowDoubleClickHandler implements TableEventHandler {
@@ -22,7 +22,7 @@ export class RowDoubleClickHandler implements TableEventHandler {
   }
 
   public get SELECTOR() {
-    return `.${tableRowClassName}`;
+    return `.${rowClassName}`;
   }
 
   public eventScope(table:WorkPackageTable) {
@@ -36,27 +36,25 @@ export class RowDoubleClickHandler implements TableEventHandler {
     // We don't want to handle these.
     if (target.parents(`.${tdClassName}`).length) {
       debugLog('Skipping click on inner cell');
-      return true;
+      return;
     }
 
     // Locate the row from event
     let element = target.closest(this.SELECTOR);
-    let wpId = element.data('workPackageId');
+    let row = table.rowObject(element.data('workPackageId'));
 
     // Ignore links
     if (target.is('a') || target.parent().is('a')) {
-      return true;
+      return;
     }
 
     // Save the currently focused work package
-    this.states.focusedWorkPackage.putValue(wpId);
+    this.states.focusedWorkPackage.putValue(row.workPackageId);
 
     this.$state.go(
       'work-packages.show',
-       { workPackageId: wpId }
+       { workPackageId: row.workPackageId }
     );
-
-    return false;
   }
 }
 

@@ -27,22 +27,60 @@
 // ++
 
 import {QueryGroupByResource} from '../api/api-v3/hal-resources/query-group-by-resource.service';
-import {QueryResource} from '../api/api-v3/hal-resources/query-resource.service';
+import {
+  QueryResource,
+  QueryColumn
+} from '../api/api-v3/hal-resources/query-resource.service';
 import {QuerySchemaResourceInterface} from '../api/api-v3/hal-resources/query-schema-resource.service';
-import {WorkPackageTableBaseState} from './wp-table-base';
-import {QueryColumn} from '../wp-query/query-column';
+import {WorkPackageTableBaseState, WorkPackageTableQueryState} from "./wp-table-base";
 
-export class WorkPackageTableGroupBy extends WorkPackageTableBaseState<QueryGroupByResource | undefined> {
+export class WorkPackageTableGroupBy extends WorkPackageTableBaseState<QueryGroupByResource | undefined> implements WorkPackageTableQueryState {
+  public available:QueryGroupByResource[] = [];
   public current:QueryGroupByResource | undefined;
 
-  constructor(query:QueryResource) {
+  constructor(query:QueryResource, schema?:QuerySchemaResourceInterface) {
     super();
     this.current = angular.copy(query.groupBy);
+
+    if (schema) {
+      this.available = angular.copy(schema.groupBy.allowedValues as QueryGroupByResource[]);
+    }
   }
 
-  public update(query:QueryResource|null) {
+  public hasChanged(query:QueryResource) {
+    const comparer = (groupBy:QueryColumn|undefined) => groupBy ? groupBy.href : null;
+
+    return !_.isEqual(
+      comparer(query.groupBy),
+      comparer(this.current)
+    );
+  }
+
+  public applyToQuery(query:QueryResource) {
+    query.groupBy = _.cloneDeep(this.current);
+  }
+
+  public update(query:QueryResource|null, schema?:QuerySchemaResourceInterface) {
     if (query) {
       this.current = angular.copy(query.groupBy);
     }
+
+    if (schema) {
+      this.available = angular.copy(schema.groupBy.allowedValues as QueryGroupByResource[]);
+    }
+  }
+
+  public setBy(column:QueryColumn) {
+    let groupBy = _.find(this.available, candidate => candidate.id === column.id)
+
+    this.current = groupBy;
+  }
+
+  public isGroupable(column:QueryColumn):boolean {
+    return !!_.find(this.available, candidate => candidate.id === column.id)
+  }
+
+  public isCurrentlyGroupedBy(column:QueryColumn):boolean {
+    return !!this.current && this.current.id === column.id
   }
 }

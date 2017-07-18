@@ -1,8 +1,7 @@
 import {States} from '../../states.service';
 import {opServicesModule} from '../../../angular-modules';
-import {WPTableRowSelectionState} from '../wp-table.interfaces';
+import {WPTableRowSelectionState, WorkPackageTableRow} from '../wp-table.interfaces';
 import {WorkPackageResource} from '../../api/api-v3/hal-resources/work-package-resource.service';
-import {RenderedRow} from '../builders/primary-render-pass';
 import {InputState} from 'reactivestates';
 
 export class WorkPackageTableSelection {
@@ -26,13 +25,11 @@ export class WorkPackageTableSelection {
   /**
    * Select all work packages
    */
-  public selectAll(rows: RenderedRow[]) {
+  public selectAll(rows:string[]) {
     const state:WPTableRowSelectionState = this._emptyState;
 
-    rows.forEach((row) => {
-      if (row.workPackageId) {
-        state.selected[row.workPackageId] = true;
-      }
+    rows.forEach((workPackageId:string) => {
+      state.selected[workPackageId] = true;
     });
 
     this.selectionState.putValue(state);
@@ -114,12 +111,12 @@ export class WorkPackageTableSelection {
   /**
    * Override current selection with the given work package id.
    */
-  public setSelection(wpId:string, position:number) {
+  public setSelection(row:WorkPackageTableRow) {
     let state:WPTableRowSelectionState = {
       selected: {},
-      activeRowIndex: position
+      activeRowIndex: row.position
     };
-    state.selected[wpId] = true;
+    state.selected[row.workPackageId] = true;
 
     this.selectionState.putValue(state);
   }
@@ -128,21 +125,21 @@ export class WorkPackageTableSelection {
    * Select a number of rows from the current `activeRowIndex`
    * to the selected target.
    * (aka shift click expansion)
+   * @param rows Current visible rows
+   * @param selected Selection target
    */
-  public setMultiSelectionFrom(rows:RenderedRow[], wpId:string, position:number) {
+  public setMultiSelectionFrom(rows:string[], selected:WorkPackageTableRow) {
     let state = this.currentState;
 
     if (this.selectionCount === 0) {
-      state.selected[wpId] = true;
-      state.activeRowIndex = position;
+      state.selected[selected.workPackageId] = true;
+      state.activeRowIndex = selected.position;
     } else if (state.activeRowIndex !== null) {
-      let start = Math.min(position, state.activeRowIndex);
-      let end = Math.max(position, state.activeRowIndex);
+      let start = Math.min(selected.position, state.activeRowIndex);
+      let end = Math.max(selected.position, state.activeRowIndex);
 
-      rows.forEach((row, i) => {
-        if (row.workPackageId) {
-          state.selected[row.workPackageId] = i >= start && i <= end;
-        }
+      rows.forEach((workPackageId, i) => {
+        state.selected[workPackageId] = i >= start && i <= end;
       });
     }
 
@@ -165,7 +162,7 @@ export class WorkPackageTableSelection {
     this
       .states.table.rendered
       .values$()
-      .map(state => _.find(state, row => row.workPackageId))
+      .map(state => _.find(state.renderedOrder, row => row.workPackageId))
       .filter(fullRow => !!fullRow && _.isEmpty(this.currentState.selected))
       .subscribe(fullRow => {
         this.states.focusedWorkPackage.putValue(fullRow!.workPackageId!);

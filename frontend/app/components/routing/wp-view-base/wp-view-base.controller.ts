@@ -45,7 +45,6 @@ export class WorkPackageViewController {
   protected wpCacheService:WorkPackageCacheService;
   protected wpEditModeState:WorkPackageEditModeStateService;
   protected WorkPackageService:any;
-  protected WorkPackageButtonsService: any;
   protected PathHelper:op.PathHelper;
   protected I18n:op.I18n;
   protected wpTableRefresh:WorkPackageTableRefreshService;
@@ -68,7 +67,7 @@ export class WorkPackageViewController {
     public $injector:ng.auto.IInjectorService,
     public $scope:ng.IScope,
     protected workPackageId:string) {
-    this.$inject('$q', '$state', 'keepTab', 'wpCacheService', 'WorkPackageService', 'WorkPackageButtonsService',
+    this.$inject('$q', '$state', 'keepTab', 'wpCacheService', 'WorkPackageService',
                  'states', 'wpEditModeState', 'PathHelper', 'I18n', 'wpTableRefresh');
 
     this.initialized = this.$q.defer();

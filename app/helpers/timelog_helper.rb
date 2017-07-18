@@ -29,6 +29,7 @@
 
 module TimelogHelper
   include ApplicationHelper
+  include WorkPackage::CsvExporter
 
   def render_timelog_breadcrumb
     links = []
@@ -113,7 +114,7 @@ module TimelogHelper
       # Export custom fields
       headers += custom_fields.map(&:name)
 
-      csv << WorkPackage::Exporter::CSV.encode_csv_columns(headers)
+      csv << encode_csv_columns(headers)
       # csv lines
       entries.each do |entry|
         fields = [format_date(entry.spent_on),
@@ -128,7 +129,7 @@ module TimelogHelper
                  ]
         fields += custom_fields.map { |f| show_value(entry.custom_value_for(f)) }
 
-        csv << WorkPackage::Exporter::CSV.encode_csv_columns(fields)
+        csv << encode_csv_columns(fields)
       end
     }
     export

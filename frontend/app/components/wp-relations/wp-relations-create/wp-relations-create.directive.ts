@@ -1,10 +1,11 @@
-import {wpDirectivesModule} from '../../../angular-modules';
-import {RelationResource} from '../../api/api-v3/hal-resources/relation-resource.service';
-import {WorkPackageResourceInterface} from '../../api/api-v3/hal-resources/work-package-resource.service';
-import {WorkPackageCacheService} from '../../work-packages/work-package-cache.service';
-import {WorkPackageNotificationService} from '../../wp-edit/wp-notification.service';
-import {WorkPackageRelationsHierarchyService} from '../wp-relations-hierarchy/wp-relations-hierarchy.service';
-import {WorkPackageRelationsService} from '../wp-relations.service';
+import {wpDirectivesModule} from "../../../angular-modules";
+import {RelationResource} from "../../api/api-v3/hal-resources/relation-resource.service";
+import {WorkPackageResourceInterface} from "../../api/api-v3/hal-resources/work-package-resource.service";
+import {WorkPackageStates} from "../../work-package-states.service";
+import {WorkPackageCacheService} from "../../work-packages/work-package-cache.service";
+import {WorkPackageNotificationService} from "../../wp-edit/wp-notification.service";
+import {WorkPackageRelationsHierarchyService} from "../wp-relations-hierarchy/wp-relations-hierarchy.service";
+import {WorkPackageRelationsService} from "../wp-relations.service";
 
 export class WorkPackageRelationsCreateController {
 
@@ -14,7 +15,7 @@ export class WorkPackageRelationsCreateController {
   public selectedWpId:string;
   public externalFormToggle: boolean;
   public fixedRelationType:string;
-  public relationTypes = RelationResource.LOCALIZED_RELATION_TYPES(false);
+  public relationTypes = this.wpRelations.getRelationTypes(true);
 
   public canAddChildren = !!this.workPackage.addChild;
   public canLinkChildren = !!this.workPackage.changeParent;
@@ -26,6 +27,7 @@ export class WorkPackageRelationsCreateController {
               protected $element:ng.IAugmentedJQuery,
               protected $timeout:ng.ITimeoutService,
               protected wpRelations:WorkPackageRelationsService,
+              private wpStates: WorkPackageStates,
               protected wpRelationsHierarchyService:WorkPackageRelationsHierarchyService,
               protected wpNotificationsService:WorkPackageNotificationService,
               protected wpCacheService:WorkPackageCacheService) {
@@ -96,7 +98,7 @@ export class WorkPackageRelationsCreateController {
   }
 
   protected createCommonRelation() {
-    return this.wpRelations.addCommonRelation(this.workPackage, this.selectedRelationType, this.selectedWpId)
+    return this.wpStates.addCommonRelation(this.workPackage, this.selectedRelationType, this.selectedWpId)
       .then(relation => {
         this.wpNotificationsService.showSave(this.workPackage);
       })

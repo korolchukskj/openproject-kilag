@@ -37,7 +37,7 @@ function SettingsModalController(this:any,
                                  settingsModal:any,
                                  wpListService:WorkPackagesListService) {
 
-  let query = states.query.resource.value!;
+  let query = states.table.query.value!;
 
   this.name = 'Settings';
   this.closeMe = settingsModal.deactivate;

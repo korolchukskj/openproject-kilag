@@ -75,3 +75,4 @@ function detectDimensionChanges($window:ng.IWindowService) {
 }
 
 opUiComponentsModule.directive('detectDimensionChanges', detectDimensionChanges);
+

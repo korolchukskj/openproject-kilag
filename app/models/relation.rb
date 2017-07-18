@@ -98,11 +98,6 @@ class Relation < ActiveRecord::Base
 
   before_save :update_schedule
 
-  def self.visible(user = User.current)
-    where(from_id: WorkPackage.visible(user))
-      .where(to_id: WorkPackage.visible(user))
-  end
-
   def other_work_package(work_package)
     from_id == work_package.id ? to : from
   end

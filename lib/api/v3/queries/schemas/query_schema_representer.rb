@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -133,9 +132,7 @@ module API
                                          has_default: true,
                                          visibility: false,
                                          values_callback: -> { represented.available_columns },
-                                         value_representer: ->(column) {
-                                           Columns::QueryColumnsFactory.representer(column)
-                                         },
+                                         value_representer: Columns::QueryColumnRepresenter,
                                          link_factory: ->(column) {
                                            converted_name = convert_attribute(column.name)
 
@@ -205,6 +202,8 @@ module API
           def self.represented_class
             Query
           end
+
+          private
 
           def convert_attribute(attribute)
             ::API::Utilities::PropertyNameConverter.from_ar_name(attribute)

@@ -27,13 +27,14 @@
 //++
 
 import {HalResource} from './hal-resource.service';
-import {WorkPackageCollectionResourceInterface} from './wp-collection-resource.service';
+import {CollectionResource, CollectionResourceInterface, } from './collection-resource.service';
+import {WorkPackageCollectionResource, WorkPackageCollectionResourceInterface} from './wp-collection-resource.service';
+import {QueryFilterResource} from './query-filter-resource.service';
 import {QueryFilterInstanceResource} from './query-filter-instance-resource.service';
 import {QuerySortByResource} from './query-sort-by-resource.service';
 import {QueryGroupByResource} from './query-group-by-resource.service';
 import {ProjectResource} from './project-resource.service';
 import {opApiModule} from '../../../../angular-modules';
-import {QueryColumn} from '../../../wp-query/query-column';
 
 interface QueryResourceEmbedded {
   results:WorkPackageCollectionResourceInterface;
@@ -76,5 +77,15 @@ function queryResource() {
 export interface QueryResourceInterface extends QueryResourceEmbedded, QueryResource {
 }
 
+/**
+ * A reference to a query column object as returned from the API.
+ */
+export interface QueryColumn extends HalResource {
+  id:string;
+  name:string;
+  _links?: {
+    self: { href:string, title:string };
+  }
+}
 
 opApiModule.factory('QueryResource', queryResource);

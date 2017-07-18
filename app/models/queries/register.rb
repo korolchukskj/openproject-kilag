@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -46,16 +45,6 @@ module Queries::Register
       @orders[query] << order
     end
 
-    def column(query, column)
-      @columns ||= Hash.new do |hash, column_key|
-        hash[column_key] = []
-      end
-
-      @columns[query] << column
-    end
-
-    attr_accessor :filters,
-                  :orders,
-                  :columns
+    attr_accessor :filters, :orders
   end
 end

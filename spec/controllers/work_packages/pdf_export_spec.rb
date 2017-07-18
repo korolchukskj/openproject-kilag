@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -28,19 +27,26 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-module Queries::Filters::Strategies
-  class HugeList < List
-    delegate :allowed_values_subset,
-             to: :filter
+require 'spec_helper'
 
-    def validate
-      if (allowed_values_subset & values).sort != values.sort
-        errors.add(:values, :inclusion)
-      end
+describe WorkPackagesController, type: :controller do
+  let(:user) { FactoryGirl.create :admin }
+  let(:project) { FactoryGirl.create :project, identifier: "exp" }
+
+  before do
+    allow(User).to receive(:current).and_return user
+  end
+
+  describe "#index .pdf" do
+    before do
+      expect(WorkPackage::Exporter)
+        .to receive(:pdf).and_raise(Prawn::Errors::CannotFit)
+
+      get :index, format: "pdf"
     end
 
-    def valid_values!
-      filter.values = allowed_values_subset
+    it "should redirect to the html index and show an error message" do
+      expect(flash[:error].downcase).to include("too many columns")
     end
   end
 end

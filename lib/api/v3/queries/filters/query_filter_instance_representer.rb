@@ -70,10 +70,10 @@ module API
                             hash[:title] = represented.operator_class.human_name if represented.operator_class.present?
                             hash
                           },
-                          setter: ->(fragment:, **) {
-                            next unless fragment
+                          setter: ->(value, **) {
+                            next unless value
 
-                            represented.operator = ::API::Utilities::ResourceLinkParser.parse_id fragment["href"],
+                            represented.operator = ::API::Utilities::ResourceLinkParser.parse_id value["href"],
                                                                                                  property: 'operator',
                                                                                                  expected_version: '3',
                                                                                                  expected_namespace: 'queries/operators'
@@ -88,10 +88,10 @@ module API
                               }
                             end
                           },
-                          setter: ->(fragment:, **) {
-                            next unless fragment
+                          setter: ->(values, **) {
+                            next unless values
 
-                            represented.values = fragment.map do |value|
+                            represented.values = values.map do |value|
                               ::API::Utilities::ResourceLinkParser.parse(value["href"])[:id]
                             end
                           },
@@ -109,9 +109,7 @@ module API
                    exec_context: :decorator,
                    show_nil: true
 
-          def _type
-            "#{converted_name.camelize}QueryFilter"
-          end
+          private
 
           def name
             represented.human_name
@@ -145,6 +143,10 @@ module API
                                  else
                                    vals
                                  end
+          end
+
+          def _type
+            "#{converted_name.camelize}QueryFilter"
           end
 
           def converted_name

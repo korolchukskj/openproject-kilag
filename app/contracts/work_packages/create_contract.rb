@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -36,11 +35,7 @@ module WorkPackages
       errors.add :author_id, :invalid if model.author != user
     end
 
-    def validate
-      user_allowed_to_add
-
-      super
-    end
+    validate :user_allowed_to_add
 
     private
 

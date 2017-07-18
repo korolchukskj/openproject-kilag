@@ -1,11 +1,16 @@
 import {WorkPackageTable} from '../../wp-fast-table';
 import {$injectFields} from '../../../angular/angular-injector-bridge.functions';
+import {WorkPackageResourceInterface} from '../../../api/api-v3/hal-resources/work-package-resource.service';
 import {States} from '../../../states.service';
 import {WorkPackageTableTimelineService} from '../../state/wp-table-timeline.service';
 import {WorkPackageCacheService} from '../../../work-packages/work-package-cache.service';
 import {commonRowClassName} from '../rows/single-row-builder';
 
 export const timelineCellClassName = 'wp-timeline-cell';
+
+export function timelineRowId(id:string) {
+  return `wp-timeline-row-${id}`;
+}
 
 export class TimelineRowBuilder {
   public states:States;
@@ -16,12 +21,15 @@ export class TimelineRowBuilder {
     $injectFields(this, 'states', 'wpTableTimeline', 'wpCacheService');
   }
 
-  public build(workPackageId:string|null) {
+  public build(workPackage:WorkPackageResourceInterface|null,
+               rowClassNames:string[] = []) {
     const cell = document.createElement('div');
-    cell.classList.add(timelineCellClassName, commonRowClassName);
+    cell.classList.add(timelineCellClassName, commonRowClassName, ...rowClassNames);
 
-    if (workPackageId) {
-      cell.dataset['workPackageId'] = workPackageId;
+    if (workPackage) {
+      cell.id = timelineRowId(workPackage.id);
+      cell.dataset['workPackageId'] = workPackage.id;
+      cell.classList.add(`${commonRowClassName}-${workPackage.id}`);
     }
 
     return cell;
@@ -33,13 +41,9 @@ export class TimelineRowBuilder {
    * @param timelineBody
    * @param rowClasses
    */
-  public insert(workPackageId:string | null,
+  public insert(workPackage:WorkPackageResourceInterface | null,
                 timelineBody:DocumentFragment | HTMLElement,
                 rowClasses:string[] = []) {
-
-    const cell = this.build(workPackageId);
-    cell.classList.add(...rowClasses);
-
-    timelineBody.appendChild(cell);
+    timelineBody.appendChild(this.build(workPackage, rowClasses));
   }
 }

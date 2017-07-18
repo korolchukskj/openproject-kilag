@@ -35,7 +35,6 @@ import {
 import {WorkPackageTableSortBy} from '../../wp-fast-table/wp-table-sort-by';
 import {WorkPackageTableSortByService} from '../../wp-fast-table/state/wp-table-sort-by.service';
 import {WorkPackageTableGroupByService} from './../../wp-fast-table/state/wp-table-group-by.service';
-import {scopeDestroyed$} from '../../../helpers/angular-rx-utils';
 
 angular
   .module('openproject.workPackages.directives')
@@ -55,10 +54,8 @@ function sortHeader(wpTableHierarchies: WorkPackageTableHierarchiesService,
     },
 
     link: function(scope: any, element: ng.IAugmentedJQuery) {
-      wpTableSortBy.onReadyWithAvailable()
-        .takeUntil(scopeDestroyed$(scope))
-        .subscribe(() => {
-        let latestSortElement = wpTableSortBy.currentSortBys[0];
+      wpTableSortBy.observeOnScope(scope).subscribe((sortBy:WorkPackageTableSortBy) => {
+        let latestSortElement = sortBy.current[0];
 
         if (!latestSortElement || scope.column.$href !== latestSortElement.column.$href) {
           scope.currentSortDirection = null;
@@ -68,7 +65,7 @@ function sortHeader(wpTableHierarchies: WorkPackageTableHierarchiesService,
 
         setFullTitleAndSummary();
 
-        scope.sortable = wpTableSortBy.isSortable(scope.column);
+        scope.sortable = sortBy.isSortable(scope.column);
 
         scope.directionClass = directionClass();
       });

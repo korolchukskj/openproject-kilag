@@ -41,6 +41,7 @@ module API
 
           work_package = write_work_package_attributes(work_package, request_body || {})
 
+
           result = create_work_package(current_user,
                                        work_package,
                                        notify_according_to_params)

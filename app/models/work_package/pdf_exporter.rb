@@ -1,3 +1,4 @@
+#-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -26,39 +27,22 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-require 'spec_helper'
-
-describe 'Work Package table hierarchy vs grouping', js: true do
-  let(:user) { FactoryGirl.create :admin }
-  let(:project) { FactoryGirl.create(:project) }
-
-  let(:wp_table) { Pages::WorkPackagesTable.new(project) }
-  let(:hierarchy) { ::Components::WorkPackages::Hierarchies.new }
-  let(:group_by) { ::Components::WorkPackages::GroupBy.new }
-
-  before do
-    login_as(user)
+module WorkPackage::PdfExporter
+  # Returns a PDF string of a list of work_packages
+  def pdf(work_packages, project, query, results, options = {})
+    ::WorkPackage::PdfExport::WorkPackageListToPdf
+      .new(work_packages,
+           project,
+           query,
+           results,
+           options)
+      .render!
   end
 
-  it 'is mutually exclusive' do
-    wp_table.visit!
-
-    hierarchy.expect_mode_enabled
-
-    group_by.enable_via_header('Type')
-
-    hierarchy.expect_mode_disabled
-
-    hierarchy.enable_via_menu
-
-    group_by.expect_not_grouped_by('Type')
-
-    group_by.enable_via_menu('Type')
-
-    hierarchy.expect_mode_disabled
-
-    hierarchy.enable_via_header
-
-    group_by.expect_not_grouped_by('Type')
+  # Returns a PDF string of a single work_package
+  def work_package_to_pdf(work_package)
+    ::WorkPackage::PdfExport::WorkPackageToPdf
+      .new(work_package)
+      .render!
   end
 end

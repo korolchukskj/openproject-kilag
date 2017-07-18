@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -32,11 +31,7 @@ require 'relations/base_contract'
 
 module Relations
   class UpdateContract < BaseContract
-    def validate
-      links_immutable
-
-      super
-    end
+    validate :links_immutable
 
     private
 

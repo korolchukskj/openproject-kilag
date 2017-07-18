@@ -2,7 +2,7 @@ import {debugLog} from "../../../../helpers/debug_output";
 import {injectorBridge} from "../../../angular/angular-injector-bridge.functions";
 import {WorkPackageTable} from "../../wp-fast-table";
 import {TableEventHandler} from "../table-handler-registry";
-import {tableRowClassName} from "../../builders/rows/single-row-builder";
+import {rowClassName} from "../../builders/rows/single-row-builder";
 import {uiStateLinkClass} from "../../builders/ui-state-link-builder";
 import {ContextMenuService} from "../../../context-menus/context-menu.service";
 import {timelineCellClassName} from "../../builders/timeline/timeline-row-builder";
@@ -20,7 +20,7 @@ export class ContextMenuHandler implements TableEventHandler {
   }
 
   public get SELECTOR() {
-    return `.${tableRowClassName},.${timelineCellClassName}`;
+    return `.${rowClassName},.${timelineCellClassName}`;
   }
 
   public eventScope(table:WorkPackageTable) {
@@ -40,15 +40,10 @@ export class ContextMenuHandler implements TableEventHandler {
     evt.stopPropagation();
 
     // Locate the row from event
-    const element = target.closest(this.SELECTOR);
-    const wpId = element.data('workPackageId');
+    let element = target.closest(this.SELECTOR);
+    let row = table.rowObject(element.data('workPackageId'));
 
-    if (!wpId) {
-      return false;
-    }
-
-    let [index,] = table.findRenderedRow(element.data('workPackageId'));
-    this.contextMenu.activate('WorkPackageContextMenu', evt, {workPackageId: wpId, rowIndex: index, table: table});
+    this.contextMenu.activate('WorkPackageContextMenu', evt, {row: row, table: table});
     return false;
   }
 }

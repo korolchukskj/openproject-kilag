@@ -30,6 +30,7 @@ import {State} from 'reactivestates';
 import {Observable, Subject} from 'rxjs';
 import {opWorkPackagesModule} from '../../angular-modules';
 import {
+  WorkPackageResource,
   WorkPackageResourceInterface
 } from '../api/api-v3/hal-resources/work-package-resource.service';
 import {ApiWorkPackagesService} from '../api/api-work-packages/api-work-packages.service';
@@ -37,34 +38,33 @@ import {States} from '../states.service';
 import {WorkPackageNotificationService} from './../wp-edit/wp-notification.service';
 import IScope = angular.IScope;
 import IPromise = angular.IPromise;
-import {WorkPackageCollectionResourceInterface} from '../api/api-v3/hal-resources/wp-collection-resource.service';
-import {SchemaResource} from '../api/api-v3/hal-resources/schema-resource.service';
-import {StateCacheService} from '../states/state-cache.service';
 
-function getWorkPackageId(id:number | string):string {
+
+function getWorkPackageId(id: number | string): string {
   return (id || "__new_work_package__").toString();
 }
 
-export class WorkPackageCacheService extends StateCacheService<WorkPackageResourceInterface> {
+export class WorkPackageCacheService {
+
+  private newWorkPackageCreatedSubject = new Subject<WorkPackageResource>();
 
   /*@ngInject*/
-  constructor(private states:States,
-              private $q:angular.IQService,
-              private wpNotificationsService:WorkPackageNotificationService,
-              private schemaCacheService:SchemaCacheService,
-              private apiWorkPackages:ApiWorkPackagesService) {
-    super();
+  constructor(private states: States,
+              private $q:ng.IQService,
+              private wpNotificationsService: WorkPackageNotificationService,
+              private schemaCacheService: SchemaCacheService,
+              private apiWorkPackages: ApiWorkPackagesService) {
   }
 
-  public updateValue(id:string, val:WorkPackageResourceInterface) {
-    this.updateWorkPackageList([val]);
+  newWorkPackageCreated(wp: WorkPackageResource) {
+    this.newWorkPackageCreatedSubject.next(wp);
   }
 
-  updateWorkPackage(wp:WorkPackageResourceInterface) {
+  updateWorkPackage(wp: WorkPackageResource) {
     this.updateWorkPackageList([wp]);
   }
 
-  updateWorkPackageList(list:WorkPackageResourceInterface[]) {
+  updateWorkPackageList(list: WorkPackageResource[]) {
     for (var wp of list) {
       const workPackageId = getWorkPackageId(wp.id);
       const wpState = this.states.workPackages.get(workPackageId);
@@ -81,7 +81,7 @@ export class WorkPackageCacheService extends StateCacheService<WorkPackageResour
     }
   }
 
-  saveWorkPackage(workPackage:WorkPackageResourceInterface):IPromise<WorkPackageResourceInterface | null> {
+  saveWorkPackage(workPackage: WorkPackageResourceInterface): IPromise<WorkPackageResourceInterface|null> {
     if (!(workPackage.dirty || workPackage.isNew)) {
       return this.$q.reject(null);
     }
@@ -100,13 +100,11 @@ export class WorkPackageCacheService extends StateCacheService<WorkPackageResour
     return deferred.promise;
   }
 
-  /**
-   * Wrapper around `require(id)`.
-   *
-   * @deprecated
-   */
-  loadWorkPackage(workPackageId:string, forceUpdate = false):State<WorkPackageResourceInterface> {
-    const state = this.state(workPackageId);
+  loadWorkPackage(workPackageId: string, forceUpdate = false): State<WorkPackageResource> {
+    const state = this.states.workPackages.get(getWorkPackageId(workPackageId));
+    if (forceUpdate) {
+      state.clear();
+    }
 
     // Several services involved in the creation of work packages
     // use this method to resolve the latest created work package,
@@ -115,46 +113,24 @@ export class WorkPackageCacheService extends StateCacheService<WorkPackageResour
       return state;
     }
 
-    this.require(workPackageId, forceUpdate);
+    state.putFromPromiseIfPristine(() => {
+      const deferred = this.$q.defer();
+
+      this.apiWorkPackages.loadWorkPackageById(workPackageId, forceUpdate)
+        .then((workPackage: WorkPackageResource) => {
+          this.schemaCacheService.ensureLoaded(workPackage).then(() => {
+            deferred.resolve(workPackage);
+          });
+        });
+
+      return deferred.promise;
+    });
+
     return state;
   }
 
-  protected loadAll(ids:string[]) {
-    return new Promise<undefined>((resolve, reject) => {
-      this.apiWorkPackages
-        .loadWorkPackagesCollectionsFor(_.uniq(ids))
-        .then((pagedResults:WorkPackageCollectionResourceInterface[]) => {
-          _.each(pagedResults, (results) => {
-            if (results.schemas) {
-              _.each(results.schemas.elements, (schema:SchemaResource) => {
-                this.states.schemas.get(schema.href as string).putValue(schema);
-              });
-            }
-
-            if (results.elements) {
-              this.updateWorkPackageList(results.elements);
-            }
-
-            resolve(undefined);
-          });
-        }, reject);
-    });
-  }
-
-  protected load(id:string) {
-    return new Promise<WorkPackageResourceInterface>((resolve, reject) => {
-      this.apiWorkPackages.loadWorkPackageById(id, true)
-        .then((workPackage:WorkPackageResourceInterface) => {
-          this.schemaCacheService.ensureLoaded(workPackage).then(() => {
-            this.updateValue(id, workPackage);
-            resolve(workPackage);
-          }, reject);
-        }, reject);
-    });
-  }
-
-  protected get multiState() {
-    return this.states.workPackages;
+  onNewWorkPackage(): Observable<WorkPackageResource> {
+    return this.newWorkPackageCreatedSubject.asObservable();
   }
 
 }

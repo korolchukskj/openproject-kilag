@@ -26,45 +26,24 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-module Components
-  module WorkPackages
-    class GroupBy
-      include Capybara::DSL
-      include RSpec::Matchers
+require 'spec_helper'
+require_relative 'shared_query_column_specs'
 
-      def enable_via_header(name)
-        open_table_column_context_menu(name)
+describe ::QueryColumn, type: :model do
+  let(:instance) { QueryColumn.new(:query_column) }
 
-        within_column_context_menu do
-          click_link('Group by')
-        end
-      end
+  it_behaves_like 'query column'
 
-      def enable_via_menu(name)
-        SettingsMenu.new.open_and_choose('Group by ...')
+  describe '#available?' do
+    context ':done_ratio column' do
+      let(:instance) { QueryColumn.new(:done_ratio) }
 
-        select name, from: 'selected_columns_new'
-        click_button 'Apply'
-      end
+      it 'is not available if the setting disables it' do
+        allow(WorkPackage)
+          .to receive(:done_ratio_disabled?)
+          .and_return(true)
 
-      def expect_not_grouped_by(name)
-        open_table_column_context_menu(name)
-
-        within_column_context_menu do
-          expect(page).to have_content('Group by')
-        end
-      end
-
-      private
-
-      def open_table_column_context_menu(name)
-        page.find(".generic-table--sort-header ##{name.downcase}").click
-      end
-
-      def within_column_context_menu
-        page.within('#column-context-menu') do
-          yield
-        end
+        expect(instance).to_not be_available
       end
     end
   end

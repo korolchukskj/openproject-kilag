@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -33,8 +32,6 @@ module API
     module Queries
       module SortBys
         class QuerySortByRepresenter < ::API::Decorators::Single
-          include API::Utilities::RepresenterToJsonCache
-
           self_link id_attribute: ->(*) { self_link_params },
                     title_getter: ->(*) { represented.name }
 
@@ -60,16 +57,14 @@ module API
 
           property :name
 
+          private
+
           def self_link_params
             [represented.converted_name, represented.direction_name]
           end
 
           def _type
             'QuerySortBy'
-          end
-
-          def json_cache_key
-            [represented.column_caption, represented.direction_name]
           end
         end
       end

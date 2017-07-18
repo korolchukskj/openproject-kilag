@@ -27,13 +27,15 @@
 //++
 
 import {wpControllersModule} from '../../../angular-modules';
+import {LoadingIndicatorService} from '../../common/loading-indicator/loading-indicator.service';
 import {WorkPackageTableSortByService} from '../../wp-fast-table/state/wp-table-sort-by.service';
 import {
+  QuerySortByResource,
+  QuerySortByDirection,
   QUERY_SORT_BY_ASC,
-  QUERY_SORT_BY_DESC,
-  QuerySortByResource
+  QUERY_SORT_BY_DESC
 } from '../../api/api-v3/hal-resources/query-sort-by-resource.service';
-import {QueryColumn} from '../../wp-query/query-column';
+import {QueryColumn} from '../../api/api-v3/hal-resources/query-resource.service';
 
 class SortModalObject {
   constructor(public column: QueryColumn|null,
@@ -56,7 +58,7 @@ function SortingModalController(this:any,
 
   wpTableSortBy.onReady($scope).then(() => {
     $scope.currentSortation = wpTableSortBy.currentSortBys;
-    let availableSortation = wpTableSortBy.available;
+    let availableSortation = wpTableSortBy.availableSortBys;
     let allColumns:QueryColumn[] = _.map(availableSortation, sort => sort.column);
     $scope.allColumns = _.uniqBy(allColumns, '$href');
 
@@ -87,7 +89,7 @@ function SortingModalController(this:any,
   $scope.updateSortation = () => {
     let sortElements = ($scope.sortationObjects as SortModalObject[])
       .filter(object => object.column)
-      .map(object => _.find(wpTableSortBy.available, availableSort =>
+      .map(object => _.find(wpTableSortBy.availableSortBys, availableSort =>
         availableSort.column.$href === object.column!.$href &&
           availableSort.direction.$href === object.direction
       ));

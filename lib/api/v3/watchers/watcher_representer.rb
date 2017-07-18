@@ -40,12 +40,12 @@ module API
 
         property :user,
                  exec_context: :decorator,
-                 getter: ->(*) {
+                 getter: -> (*) {
                    create_link_representer
                  },
-                 setter: ->(fragment:, **) {
+                 setter: -> (value, *) {
                    link = create_link_representer
-                   link.from_hash(fragment)
+                   link.from_hash(value)
                  }
 
         private

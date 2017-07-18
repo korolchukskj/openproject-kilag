@@ -29,10 +29,6 @@
 
 module WorkPackages
   class CreateNoteContract < ::ModelContract
-    def self.model
-      WorkPackage
-    end
-
     attr_accessor :policy,
                   :user
 

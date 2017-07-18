@@ -4,7 +4,7 @@ import {WorkPackageTable} from '../../wp-fast-table';
 import {States} from '../../../states.service';
 import {TableEventHandler} from '../table-handler-registry';
 import {WorkPackageTableSelection} from '../../state/wp-table-selection.service';
-import {tableRowClassName} from '../../builders/rows/single-row-builder';
+import {rowClassName} from '../../builders/rows/single-row-builder';
 import {tdClassName} from '../../builders/cell-builder';
 
 export class RowClickHandler implements TableEventHandler {
@@ -21,7 +21,7 @@ export class RowClickHandler implements TableEventHandler {
   }
 
   public get SELECTOR() {
-    return `.${tableRowClassName}`;
+    return `.${rowClassName}`;
   }
 
   public eventScope(table:WorkPackageTable) {
@@ -35,45 +35,37 @@ export class RowClickHandler implements TableEventHandler {
     // We don't want to handle these.
     if (target.parents(`.${tdClassName}`).length) {
       debugLog('Skipping click on inner cell');
-      return true;
+      return;
     }
 
     // Locate the row from event
     let element = target.closest(this.SELECTOR);
-    let wpId = element.data('workPackageId');
-    let classIdentifier = element.data('classIdentifier');
-
-    if (!wpId) {
-      return true;
-    }
+    let row = table.rowObject(element.data('workPackageId'));
 
     // Ignore links
     if (target.is('a') || target.parent().is('a')) {
-      return true;
+      return;
     }
 
     // The current row is the last selected work package
     // not matter what other rows are (de-)selected below.
     // Thus save that row for the details view button.
-    let [index, row] = table.findRenderedRow(classIdentifier);
-    this.states.focusedWorkPackage.putValue(wpId);
+    this.states.focusedWorkPackage.putValue(row.workPackageId);
 
     // Update single selection if no modifier present
     if (!(evt.ctrlKey || evt.metaKey || evt.shiftKey)) {
-      this.wpTableSelection.setSelection(wpId, index);
+      this.wpTableSelection.setSelection(row);
     }
 
     // Multiple selection if shift present
     if (evt.shiftKey) {
-      this.wpTableSelection.setMultiSelectionFrom(table.renderedRows, wpId, index);
+      this.wpTableSelection.setMultiSelectionFrom(table.rows, row);
     }
 
     // Single selection expansion if ctrl / cmd(mac)
     if (evt.ctrlKey || evt.metaKey) {
-      this.wpTableSelection.toggleRow(wpId);
+      this.wpTableSelection.toggleRow(row.workPackageId);
     }
-
-    return false;
   }
 }
 

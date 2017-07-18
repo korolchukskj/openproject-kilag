@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -28,7 +27,7 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-class Queries::WorkPackages::Columns::CustomFieldColumn < Queries::WorkPackages::Columns::WorkPackageColumn
+class QueryCustomFieldColumn < QueryColumn
   def initialize(custom_field)
     super
 
@@ -36,6 +35,7 @@ class Queries::WorkPackages::Columns::CustomFieldColumn < Queries::WorkPackages:
     set_sortable! custom_field
     set_groupable! custom_field
     set_summable! custom_field
+    set_available! custom_field
 
     @cf = custom_field
   end
@@ -55,6 +55,10 @@ class Queries::WorkPackages::Columns::CustomFieldColumn < Queries::WorkPackages:
 
   def set_summable!(custom_field)
     self.summable = %w(float int).include?(custom_field.field_format)
+  end
+
+  def set_available!(custom_field)
+    self.available = custom_field.field_format != 'text'
   end
 
   def groupable_custom_field?(custom_field)
@@ -85,15 +89,5 @@ class Queries::WorkPackages::Columns::CustomFieldColumn < Queries::WorkPackages:
 
     # TODO: eliminate calls of this method with an Array and drop the :compact call below
     work_packages.map { |wp| value(wp) }.compact.reduce(:+)
-  end
-
-  def self.instances(context = nil)
-    if context
-      context.all_work_package_custom_fields
-    else
-      WorkPackageCustomField.all
-    end
-      .reject { |cf| cf.field_format == 'text' }
-      .map { |cf| new(cf) }
   end
 end

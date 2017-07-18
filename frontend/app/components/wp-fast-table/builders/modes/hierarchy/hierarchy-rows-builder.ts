@@ -21,6 +21,7 @@ export class HierarchyRowsBuilder extends RowsBuilder {
     super(workPackageTable);
     injectorBridge(this);
     this.rowBuilder = new SingleHierarchyRowBuilder(this.workPackageTable);
+    this.refreshBuilder = this.rowBuilder;
   }
 
   /**

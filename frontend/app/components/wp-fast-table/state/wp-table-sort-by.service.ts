@@ -27,66 +27,40 @@
 // ++
 
 import {
-  TableStateStates,
-  WorkPackageQueryStateService,
-  WorkPackageTableBaseService
+  WorkPackageTableBaseService,
+  TableStateStates
 } from './wp-table-base.service';
+import {QueryColumn} from '../../api/api-v3/hal-resources/query-resource.service';
 import {QueryResource} from '../../api/api-v3/hal-resources/query-resource.service';
 import {QuerySchemaResourceInterface} from '../../api/api-v3/hal-resources/query-schema-resource.service';
 import {
+  QuerySortByResource,
   QUERY_SORT_BY_ASC,
-  QUERY_SORT_BY_DESC,
-  QuerySortByResource
+  QUERY_SORT_BY_DESC
 } from '../../api/api-v3/hal-resources/query-sort-by-resource.service';
 import {opServicesModule} from '../../../angular-modules';
 import {States} from '../../states.service';
 import {WorkPackageTableSortBy} from '../wp-table-sort-by';
-import {QueryColumn} from '../../wp-query/query-column';
-import {combine} from 'reactivestates';
-import {Observable} from 'rxjs';
 
-export class WorkPackageTableSortByService extends WorkPackageTableBaseService implements WorkPackageQueryStateService {
+export class WorkPackageTableSortByService extends WorkPackageTableBaseService {
   protected stateName = 'sortBy' as TableStateStates;
 
   constructor(public states: States) {
     super(states);
   }
 
-  public initialize(query:QueryResource) {
-    let sortBy = new WorkPackageTableSortBy(query);
+  public initialize(query:QueryResource, schema:QuerySchemaResourceInterface) {
+    let sortBy = new WorkPackageTableSortBy(query, schema);
 
     this.state.putValue(sortBy);
   }
 
-  public onReadyWithAvailable():Observable<null> {
-    return combine(this.state, this.states.query.available.sortBy)
-      .values$()
-      .mapTo(null);
-  }
-
-  public hasChanged(query:QueryResource) {
-    const comparer = (sortBy:QuerySortByResource[]) => sortBy.map(el => el.href);
-
-    return !_.isEqual(
-      comparer(query.sortBy),
-      comparer(this.current.current)
-    );
-  }
-
-  public applyToQuery(query:QueryResource) {
-    query.sortBy = _.cloneDeep(this.current.current);
-    return true;
-  }
-
   public isSortable(column:QueryColumn):boolean {
-    return !!_.find(
-      this.available,
-      (candidate) => candidate.column.$href === column.$href
-    );
+    return !!this.current.isSortable(column);
   }
 
   public addAscending(column:QueryColumn) {
-    let available = this.findAvailableDirection(column, QUERY_SORT_BY_ASC);
+    let available = this.current.findAvailableDirection(column, QUERY_SORT_BY_ASC);
 
     if (available) {
       this.add(available);
@@ -94,19 +68,11 @@ export class WorkPackageTableSortByService extends WorkPackageTableBaseService i
   }
 
   public addDescending(column:QueryColumn) {
-    let available = this.findAvailableDirection(column, QUERY_SORT_BY_DESC);
+    let available = this.current.findAvailableDirection(column, QUERY_SORT_BY_DESC);
 
     if (available) {
       this.add(available);
     }
-  }
-
-  public findAvailableDirection(column:QueryColumn, direction:string):QuerySortByResource|undefined {
-    return _.find(
-      this.available,
-      (candidate) => (candidate.column.$href === column.$href &&
-      candidate.direction.$href === direction)
-    );
   }
 
   public add(sortBy:QuerySortByResource) {
@@ -129,16 +95,12 @@ export class WorkPackageTableSortByService extends WorkPackageTableBaseService i
     return this.state.value as WorkPackageTableSortBy;
   }
 
-  private get availableState() {
-    return this.states.query.available.sortBy;
-  }
-
   public get currentSortBys():QuerySortByResource[] {
     return this.current.current;
   }
 
-  public get available():QuerySortByResource[] {
-    return this.availableState.getValueOr([]);
+  public get availableSortBys():QuerySortByResource[] {
+    return this.current.available;
   }
 }
 

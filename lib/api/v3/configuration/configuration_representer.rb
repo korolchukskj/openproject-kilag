@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -41,10 +40,12 @@ module API
         end
 
         property :maximum_attachment_file_size,
-                 getter: ->(*) { attachment_max_size.to_i.kilobyte }
+                 getter: -> (*) { attachment_max_size.to_i.kilobyte }
 
         property :per_page_options,
-                 getter: ->(*) { per_page_options.split(',').map(&:to_i) }
+                 getter: -> (*) { per_page_options.split(',').map(&:to_i) }
+
+        private
 
         def _type
           'Configuration'

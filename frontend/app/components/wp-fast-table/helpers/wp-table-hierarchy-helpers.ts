@@ -15,10 +15,6 @@ export function hierarchyRootClass(ancestorId:string):string {
   return `__hierarchy-root-${ancestorId}`;
 }
 
-export function ancestorClassIdentifier(ancestorId:string) {
-  return `wp-ancestor-row-${ancestorId}`;
-}
-
 /**
  * Returns whether any of the children of this work package
  * are visible in the table results.
@@ -28,10 +24,9 @@ export function hasChildrenInTable(workPackage:WorkPackageResourceInterface, tab
     return false; // Work Package has no children at all
   }
 
-  // Return if this work package is in the ancestor chain of any of the work packages
-  return !!_.find(table.originalRows, (wpId:string) => {
-    const row = table.originalRowIndex[wpId].object;
-
-    return row.ancestorIds.indexOf(workPackage.id.toString()) >= 0;
+  // If any visible children in the table
+  return !!_.find(workPackage.children, (child:WorkPackageResourceInterface) => {
+    const childId = child.idFromLink!;
+    return table.rowIndex[childId] !== undefined;
   });
 }

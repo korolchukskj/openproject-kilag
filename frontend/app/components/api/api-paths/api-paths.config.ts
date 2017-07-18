@@ -36,7 +36,6 @@ function apiPathsProviderConfig(apiPathsProvider:ApiPathsServiceProvider) {
   }];
   const workPackages = ['work_packages{/wp}', {
     form: 'form',
-    relations: 'relations',
     availableProjects: 'available_projects'
   }, {
     project: projects

@@ -1,174 +1,71 @@
-import {multiInput, State, StatesGroup} from 'reactivestates';
+//-- copyright
+// OpenProject is a project management system.
+// Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License version 3.
+//
+// OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
+// Copyright (C) 2006-2013 Jean-Philippe Lang
+// Copyright (C) 2010-2013 the ChiliProject Team
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+// See doc/COPYRIGHT.rdoc for more details.
+//++
+
+import {wpDirectivesModule} from '../../angular-modules';
+import {HalRequestService} from '../api/api-v3/hal-request/hal-request.service';
 import {CollectionResource} from '../api/api-v3/hal-resources/collection-resource.service';
-import {
-  RelationResource,
-  RelationResourceInterface
-} from '../api/api-v3/hal-resources/relation-resource.service';
-import {WorkPackageResourceInterface} from '../api/api-v3/hal-resources/work-package-resource.service';
-import {RelationsDmService} from '../api/api-v3/hal-resource-dms/relations-dm.service';
-import {WorkPackageTableRefreshService} from '../wp-table/wp-table-refresh-request.service';
-import {opServicesModule} from '../../angular-modules';
-import {Observable} from 'rxjs';
-import {StateCacheService} from '../states/state-cache.service';
+import {RelationResource} from '../api/api-v3/hal-resources/relation-resource.service';
 
 export type RelationsStateValue = { [relationId:number]:RelationResource };
 
-class RelationStateGroup extends StatesGroup {
-  name = 'WP-Relations';
+export class WorkPackageRelationsService {
 
-  relations = multiInput<RelationsStateValue>();
+  constructor(private halRequest:HalRequestService,
+              private I18n:op.I18n) {
 
-  constructor() {
-    super();
-    this.initializeMembers();
-  }
-}
-
-export class WorkPackageRelationsService extends StateCacheService<RelationsStateValue> {
-
-  private relationStates:RelationStateGroup;
-
-  /*@ngInject*/
-  constructor(private relationsDm:RelationsDmService,
-              private wpTableRefresh:WorkPackageTableRefreshService,
-              private $q:ng.IQService,
-              private PathHelper:any) {
-    super();
-    this.relationStates = new RelationStateGroup();
   }
 
-  protected get multiState() {
-    return this.relationStates.relations;
-  }
+  public getRelationTypes(rejectParentChild?:boolean):any[] {
+    let relationTypes = RelationResource.TYPES();
 
-  /**
-   * Load a set of work package ids into the states, regardless of them being loaded
-   * @param workPackageIds
-   */
-  protected load(id:string) {
-    return new Promise((resolve, reject) => {
-      this.relationsDm
-        .load(id)
-        .then(elements => {
-          this.updateRelationsStateTo(id, elements);
-          resolve();
-        })
-        .catch((error) => reject(error));
+    if (rejectParentChild) {
+      _.pull(relationTypes, 'parent', 'children');
+    }
+
+    return relationTypes.map((key:string) => {
+      return {name: key, label: this.I18n.t('js.relation_labels.' + key)};
     });
   }
 
-  protected loadAll(ids:string[]) {
-    const deferred = this.$q.defer<undefined>();
+  public relationsRequest(workPackageIds:string[]):ng.IPromise<RelationResource[]> {
+    let validIds = _.filter(workPackageIds, id => /\d+/.test(id));
 
-    this.relationsDm
-      .loadInvolved(ids)
-      .then((elements:RelationResource[]) => {
-        this.clearSome(...ids);
-        this.accumulateRelationsFromInvolved(ids, elements);
-        deferred.resolve();
-      });
-
-    return deferred.promise;
-  }
-
-  /**
-   * Remove the given relation.
-   */
-  public removeRelation(relation:RelationResourceInterface) {
-    return relation.delete().then(() => {
-      this.removeFromStates(relation);
-      this.wpTableRefresh.request(true,
-        `Removing relation (${relation.ids.from} to ${relation.ids.to})`);
-    });
-  }
-
-  /**
-   * Update the given relation
-   */
-  public updateRelation(workPackageId:string, relation:RelationResourceInterface, params:any) {
-    return relation.updateImmediately(params)
-      .then((savedRelation:RelationResourceInterface) => {
-        this.insertIntoStates(relation);
-        this.wpTableRefresh.request(true,
-          `Updating relation (${relation.ids.from} to ${relation.ids.to})`);
-        return savedRelation;
-      });
-  }
-
-  public addCommonRelation(workPackage:WorkPackageResourceInterface,
-                           relationType:string,
-                           relatedWpId:string) {
-    const params = {
-      _links: {
-        from: {href: workPackage.href},
-        to: {href: this.PathHelper.apiV3WorkPackagePath(relatedWpId)}
+    return this.halRequest.get(
+      '/api/v3/relations',
+      {
+        filters: JSON.stringify([{involved: {operator: '=', values: validIds}}])
       },
-      type: relationType
-    };
-
-    return workPackage.addRelation(params).then((relation:RelationResourceInterface) => {
-      this.insertIntoStates(relation);
-      this.wpTableRefresh.request(true,
-        `Adding relation (${relation.ids.from} to ${relation.ids.to})`);
-      return relation;
+      {
+        caching: {enabled: false}
+      }).then((collection:CollectionResource) => {
+      return collection.elements;
     });
   }
-
-  /**
-   * Merges a single relation
-   * @param relation
-   */
-  private insertIntoStates(relation:RelationResource) {
-    _.values(relation.ids).forEach(wpId => {
-      this.multiState.get(wpId).doModify((value:RelationsStateValue) => {
-        value[relation.id] = relation;
-        return value;
-      }, () => { return {}; });
-    });
-  }
-
-  /**
-   * Remove the given relation from the from/to states
-   * @param relation
-   */
-  private removeFromStates(relation:RelationResource) {
-    _.values(relation.ids).forEach(wpId => {
-      this.multiState.get(wpId).doModify((value:RelationsStateValue) => {
-        delete value[relation.id];
-        return value;
-      }, () => { return {}; });
-    });
-  }
-
-  /**
-   * Given a set of complete relations for this work packge, fill
-   * the associated relations state
-   *
-   * @param wpId The wpId the relations belong to
-   * @param relations The relation resource array.
-   */
-  private updateRelationsStateTo(wpId:string, relations:RelationResource[]) {
-    const state = this.multiState.get(wpId);
-    const relationsToInsert = _.keyBy(relations, r => r.id);
-
-    state.putValue(relationsToInsert, "Overriding relations state.");
-  }
-
-  /**
-   *
-   * We don't know how many values we're getting for a single work package
-   * when we use the involved filter.
-   *
-   * We need to group relevant relations for work packages based on their to/from filter.
-   */
-  private accumulateRelationsFromInvolved(involved:string[], relations:RelationResource[]) {
-    involved.forEach(id => {
-      const relevant = relations.filter(r => r.isInvolved(id));
-      this.updateRelationsStateTo(id, relevant);
-    });
-
-  }
-
 }
 
-opServicesModule.service('wpRelations', WorkPackageRelationsService);
+wpDirectivesModule.service('wpRelations', WorkPackageRelationsService);

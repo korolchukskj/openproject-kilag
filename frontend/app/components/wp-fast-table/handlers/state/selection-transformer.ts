@@ -1,6 +1,6 @@
 import {injectorBridge} from "../../../angular/angular-injector-bridge.functions";
 import {States} from "../../../states.service";
-import {tableRowClassName} from "../../builders/rows/single-row-builder";
+import {rowClassName} from "../../builders/rows/single-row-builder";
 import {checkedClassName} from "../../builders/ui-state-link-builder";
 import {rowId} from "../../helpers/wp-table-row-helpers";
 import {WorkPackageTableSelection} from "../../state/wp-table-selection.service";
@@ -22,7 +22,7 @@ export class SelectionTransformer {
 
     // Bind CTRL+A to select all work packages
     Mousetrap.bind(['command+a', 'ctrl+a'], (e) => {
-      this.wpTableSelection.selectAll(table.renderedRows);
+      this.wpTableSelection.selectAll(table.rows);
 
       e.preventDefault();
       return false;
@@ -40,10 +40,10 @@ export class SelectionTransformer {
    * Update all currently visible rows to match the selection state.
    */
   private renderSelectionState(state:WPTableRowSelectionState) {
-    jQuery(`.${tableRowClassName}.${checkedClassName}`).removeClass(checkedClassName);
+    jQuery(`.${rowClassName}.${checkedClassName}`).removeClass(checkedClassName);
 
     _.each(state.selected, (selected: boolean, workPackageId:any) => {
-      jQuery(`.${tableRowClassName}[data-work-package-id="${workPackageId}"]`).toggleClass(checkedClassName, selected);
+      jQuery(`#${rowId(workPackageId)}`).toggleClass(checkedClassName, selected);
     });
   }
 }

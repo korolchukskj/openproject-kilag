@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -41,10 +40,10 @@ module API
 
         property :file_name
         property :description,
-                 getter: ->(*) {
+                 getter: -> (*) {
                    ::API::Decorators::Formattable.new(description, format: 'plain')
                  },
-                 setter: ->(fragment:, **) { self.description = fragment['raw'] },
+                 setter: -> (value, *) { self.description = value['raw'] },
                  render_nil: true
       end
     end

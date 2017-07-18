@@ -28,14 +28,15 @@ describe 'Activity tab', js: true, selenium: true do
   let(:initial_subject) { 'My Subject' }
   let(:initial_comment) { 'First comment on this wp.' }
   let(:comments_in_reverse) { false }
-  let(:activity_tab) { ::Components::WorkPackages::Activities.new(work_package) }
 
   let(:initial_note) {
     work_package.journals[0]
   }
 
   let!(:note_1) {
-    attributes = { subject: 'New subject', description: 'Some not so long description.' }
+    attributes = { subject: 'New subject',
+                   description: 'Some not so long description.',
+                   journal_notes: 'Updated the subject and description' }
 
     alter_work_package_at(work_package,
                           attributes: attributes,
@@ -78,13 +79,9 @@ describe 'Activity tab', js: true, selenium: true do
         expect(page).to have_selector(date_selector,
                                       text: journal.created_at.to_date.strftime("%B %-d, %Y"))
 
-
         activity = page.find("#activity-#{idx + 1}")
-
-        if journal.id != note_1.id
-          expect(activity).to have_selector('.user', text: journal.user.name)
-          expect(activity).to have_selector('.user-comment > .message', text: journal.notes)
-        end
+        expect(activity).to have_selector('.user', text: journal.user.name)
+        expect(activity).to have_selector('.user-comment > .message', text: journal.notes)
 
         if activity == note_1
           expect(activity).to have_selector('.work-package-details-activities-messages .message',
@@ -126,26 +123,13 @@ describe 'Activity tab', js: true, selenium: true do
         it_behaves_like 'shows activities in order'
       end
 
-      it 'can toggle between activities and comments-only' do
-        expect(page).to have_selector('.work-package-details-activities-activity-contents', count: 3)
-
-        # Show only comments
-        find('.activity-comments--toggler').click
-
-        # It should remove the middle
-        expect(page).to have_selector('.work-package-details-activities-activity-contents', count: 2)
-
-        expect(page).to have_selector("#activity-#{initial_note.id}")
-        expect(page).to have_selector("#activity-#{note_2.id}")
-        expect(page).to have_no_selector("#activity-#{note_1.id}")
-
-        # Show all again
-        find('.activity-comments--toggler').click
-        expect(page).to have_selector('.work-package-details-activities-activity-contents', count: 3)
-      end
-
       it 'can quote a previous comment' do
-        activity_tab.hover_action('1', :quote)
+        # Hover comment
+        page.find('#activity-1 .work-package-details-activities-activity-contents').hover
+
+        # Quote this comment
+        expect(page).to have_selector('#activity-1 .comments-icons .icon-quote', visible: true)
+        page.find('#activity-1 .comments-icons .icon-quote').click
 
         field = WorkPackageTextAreaField.new work_package_page,
                                              'comment',
@@ -161,7 +145,7 @@ describe 'Activity tab', js: true, selenium: true do
         field.input_element.set(quote)
         field.submit_by_click
 
-        expect(page).to have_selector('.user-comment > .message', count: 3)
+        expect(page).to have_selector('.user-comment > .message', count: 4)
         expect(page).to have_selector('.user-comment > .message blockquote')
       end
     end

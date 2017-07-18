@@ -1,5 +1,4 @@
 #-- encoding: UTF-8
-
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -43,6 +42,8 @@ module API
 
           property :id,
                    exec_context: :decorator
+
+          private
 
           def converted_key
             convert_attribute(represented.name)

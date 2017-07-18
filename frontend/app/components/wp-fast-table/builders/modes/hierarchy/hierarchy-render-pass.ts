@@ -1,23 +1,19 @@
 import {WorkPackageTable} from '../../../wp-fast-table';
 import {WorkPackageResourceInterface} from '../../../../api/api-v3/hal-resources/work-package-resource.service';
-import {
-  additionalHierarchyRowClassName,
-  SingleHierarchyRowBuilder
-} from './single-hierarchy-row-builder';
+import {SingleHierarchyRowBuilder} from './single-hierarchy-row-builder';
 import {WorkPackageTableRow} from '../../../wp-table.interfaces';
 import {
-  ancestorClassIdentifier,
-  collapsedGroupClass,
-  hierarchyGroupClass,
+  collapsedGroupClass, hierarchyGroupClass,
   hierarchyRootClass
 } from '../../../helpers/wp-table-hierarchy-helpers';
-import {PrimaryRenderPass, RowRenderInfo} from '../../primary-render-pass';
+import {TableRenderPass} from '../table-render-pass';
+import {Subject} from 'rxjs';
 import {States} from '../../../../states.service';
 import {$injectFields} from '../../../../angular/angular-injector-bridge.functions';
 import {WorkPackageTableHierarchies} from '../../../wp-table-hierarchies';
-import {RenderInfo} from '../../../../wp-table/timeline/wp-timeline';
+import {rowClass} from '../../../helpers/wp-table-row-helpers';
 
-export class HierarchyRenderPass extends PrimaryRenderPass {
+export class HierarchyRenderPass extends TableRenderPass {
   public states:States;
 
   // Remember which rows were already rendered
@@ -34,7 +30,7 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
 
   constructor(public workPackageTable:WorkPackageTable,
               public rowBuilder:SingleHierarchyRowBuilder) {
-    super(workPackageTable, rowBuilder);
+    super(workPackageTable);
 
     $injectFields(this, 'states');
   }
@@ -52,8 +48,8 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
    * Render the hierarchy table into the document fragment
    */
   protected doRender() {
-    this.workPackageTable.originalRows.forEach((wpId:string) => {
-      const row:WorkPackageTableRow = this.workPackageTable.originalRowIndex[wpId];
+    this.workPackageTable.rows.forEach((wpId:string) => {
+      const row:WorkPackageTableRow = this.workPackageTable.rowIndex[wpId];
       const workPackage:WorkPackageResourceInterface = row.object;
 
       // If we need to defer this row, skip it for now
@@ -69,7 +65,8 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
         let [tr, hidden] = this.rowBuilder.buildEmpty(workPackage);
         row.element = tr;
         this.tableBody.appendChild(tr);
-        this.markRendered(workPackage, hidden);
+        this.timelineBody.appendChild(this.buildTimelineRow(workPackage));
+        this.markRendered(workPackage, hidden, false);
       }
 
       // Render all potentially deferred rows
@@ -84,22 +81,22 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
    * @returns {boolean}
    */
   public deferInsertion(workPackage:WorkPackageResourceInterface):boolean {
-    const parent = workPackage.parent;
+    const parentId = workPackage.parentId;
 
     // Will only defer if parent exists
-    if (!parent) {
+    if (!parentId) {
       return false;
     }
 
     // Will only defer is parent is
     // 1. existent in the table results
     // 1. yet to be rendered
-    if (this.workPackageTable.originalRowIndex[parent.id] === undefined || this.rendered[parent.id]) {
+    if (this.workPackageTable.rowIndex[parentId] === undefined || this.rendered[parentId]) {
       return false;
     }
 
-    const elements = this.deferred[parent.id] || [];
-    this.deferred[parent.id] = elements.concat([workPackage]);
+    const elements = this.deferred[parentId] || [];
+    this.deferred[parentId] = elements.concat([workPackage]);
 
     return true;
   }
@@ -117,8 +114,8 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
     // run them through the callback
     deferredChildren.forEach((child:WorkPackageResourceInterface) => {
       // Callback on the child itself
-      const row:WorkPackageTableRow = this.workPackageTable.originalRowIndex[child.id];
-      this.insertUnderParent(row, child.parent);
+      const row:WorkPackageTableRow = this.workPackageTable.rowIndex[child.id];
+      this.insertUnderParent(row, child.parentId.toString());
 
       // Descend into any children the child WP might have and callback
       this.renderAllDeferredChildren(child);
@@ -131,9 +128,7 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
     const ancestorGroups:string[] = [];
 
     // Iterate ancestors
-    ancestors.forEach((el:WorkPackageResourceInterface, index:number) => {
-      const ancestor = this.states.workPackages.get(el.id).value!;
-
+    ancestors.forEach((ancestor:WorkPackageResourceInterface, index:number) => {
 
       // If we see the parent the first time,
       // build it as an additional row and insert it into the ancestry
@@ -145,11 +140,12 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
         if (index === 0) {
           // Special case, first ancestor => root without parent
           this.tableBody.appendChild(ancestorRow);
+          this.timelineBody.appendChild(this.buildTimelineRow(ancestor));
           this.markRendered(ancestor, hidden, true);
         } else {
           // This ancestor must be inserted in the last position of its root
           const parent = ancestors[index - 1];
-          this.insertAtExistingHierarchy(ancestor, ancestorRow, parent, hidden, true);
+          this.insertAtExistingHierarchy(ancestor, ancestorRow, parent.id, hidden, true);
         }
 
         // Remember we just added this extra ancestor row
@@ -165,7 +161,7 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
 
     // Insert this row to parent
     const parent = _.last(ancestors);
-    this.insertUnderParent(row, parent);
+    this.insertUnderParent(row, parent.id);
   }
 
   /**
@@ -173,10 +169,10 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
    * @param row
    * @param parentId
    */
-  private insertUnderParent(row:WorkPackageTableRow, parent:WorkPackageResourceInterface) {
+  private insertUnderParent(row:WorkPackageTableRow, parentId:string) {
     const [tr, hidden] = this.rowBuilder.buildEmpty(row.object);
     row.element = tr;
-    this.insertAtExistingHierarchy(row.object, tr, parent, hidden, false);
+    this.insertAtExistingHierarchy(row.object, tr, parentId, hidden, false);
   }
 
   /**
@@ -184,12 +180,17 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
    * @param workPackage
    * @param hidden
    */
-  private markRendered(workPackage:WorkPackageResourceInterface, hidden:boolean = false, isAncestor:boolean = false) {
+  private markRendered(workPackage:WorkPackageResourceInterface, hidden:boolean = false, isAncestor:boolean) {
     this.rendered[workPackage.id] = true;
-    this.renderedOrder.push(this.buildRenderInfo(workPackage, hidden, isAncestor));
+    this.renderedOrder.push({
+      workPackageId: isAncestor ? null : workPackage.id.toString(),
+      classIdentifier: rowClass(workPackage.id),
+      hidden: hidden
+    });
   }
 
-  public ancestorClasses(workPackage:WorkPackageResourceInterface) {
+
+  private buildTimelineRow(workPackage:WorkPackageResourceInterface):HTMLElement {
     const rowClasses = [hierarchyRootClass(workPackage.id)];
 
     if (_.isArray(workPackage.ancestors)) {
@@ -203,47 +204,33 @@ export class HierarchyRenderPass extends PrimaryRenderPass {
       });
     }
 
-    return rowClasses;
+    return this.timelineBuilder.build(workPackage, rowClasses);
   }
 
   /**
    * Append a row to the given parent hierarchy group.
    */
-  private insertAtExistingHierarchy(workPackage:WorkPackageResourceInterface,
-                                    el:HTMLElement,
-                                    parent:WorkPackageResourceInterface,
-                                    hidden:boolean,
-                                    isAncestor:boolean) {
+  private insertAtExistingHierarchy(workPackage:WorkPackageResourceInterface, el:HTMLElement, parentId:string, hidden:boolean, isAncestor:boolean) {
     // Either append to the hierarchy group root (= the parentID row itself)
-    const hierarchyRoot = `.__hierarchy-root-${parent.id}`;
+    const hierarchyRoot = `.__hierarchy-root-${parentId}`;
     // Or, if it has descendants, append to the LATEST of that set
-    const hierarchyGroup = `.__hierarchy-group-${parent.id}`;
+    const hierarchyGroup = `.__hierarchy-group-${parentId}`;
 
     // Insert into table
-    this.spliceRow(
-      el,
-      `${hierarchyRoot},${hierarchyGroup}`,
-      this.buildRenderInfo(workPackage, hidden, isAncestor)
-    );
+    const target = jQuery(this.tableBody).find(`${hierarchyRoot},${hierarchyGroup}`).last();
+    target.after(el);
 
+    // Mark as rendered at the given position
+    const index = target.index();
+    this.renderedOrder.splice(index + 1, 0, {
+      workPackageId: isAncestor ? null : workPackage.id.toString(),
+      classIdentifier: rowClass(workPackage.id),
+      hidden: hidden,
+    });
     this.rendered[workPackage.id] = true;
-  }
 
-  private buildRenderInfo(workPackage:WorkPackageResourceInterface, hidden:boolean, isAncestor:boolean):RowRenderInfo {
-    let info:any = {
-      workPackage: workPackage,
-      renderType: 'primary',
-      hidden: hidden
-    };
-
-    if (isAncestor) {
-      info.additionalClasses = [additionalHierarchyRowClassName].concat(this.ancestorClasses(workPackage));
-      info.classIdentifier = ancestorClassIdentifier(workPackage.id);
-    } else {
-      info.additionalClasses = this.ancestorClasses(workPackage);
-      info.classIdentifier = this.rowBuilder.classIdentifier(workPackage);
-    }
-
-    return info as RowRenderInfo;
+    // Insert into timeline
+    const timelineRow = this.buildTimelineRow(workPackage);
+    jQuery(this.timelineBody).find(`${hierarchyRoot},${hierarchyGroup}`).last().after(timelineRow);
   }
 }
