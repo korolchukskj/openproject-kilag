@@ -5,7 +5,7 @@ import {WorkPackageTable} from "../../wp-fast-table";
 import {WorkPackageTableHierarchiesService} from './../../state/wp-table-hierarchy.service';
 import {WorkPackageTableHierarchies} from "../../wp-table-hierarchies";
 import {indicatorCollapsedClass} from "../../builders/modes/hierarchy/single-hierarchy-row-builder";
-import {rowClassName} from '../../builders/rows/single-row-builder';
+import {tableRowClassName} from '../../builders/rows/single-row-builder';
 import {debugLog} from '../../../../helpers/debug_output';
 
 export class HierarchyTransformer {
@@ -14,20 +14,30 @@ export class HierarchyTransformer {
 
   constructor(table:WorkPackageTable) {
     injectorBridge(this);
-    let enabled = this.wpTableHierarchies.isEnabled;
 
     this.states.updates.hierarchyUpdates
       .values$('Refreshing hierarchies on user request')
-      .subscribe((state: WorkPackageTableHierarchies) => {
-        if (enabled !== state.isEnabled) {
+      .takeUntil(this.states.table.stopAllSubscriptions)
+      .map((state) => state.isEnabled)
+      .distinctUntilChanged()
+      .subscribe(() => {
+        // We don't have to reload all results when _disabling_ the hierarchy mode.
+        if (!this.wpTableHierarchies.isEnabled) {
           table.redrawTableAndTimeline();
-        } else if (enabled) {
-          // No change in hierarchy mode
-          // Refresh groups
-          this.renderHierarchyState(state);
         }
+    });
 
-        enabled = state.isEnabled;
+    let lastValue = this.wpTableHierarchies.isEnabled;
+
+    this.wpTableHierarchies
+      .observeUntil(this.states.table.stopAllSubscriptions)
+      .subscribe((state) => {
+
+      if (state.isEnabled === lastValue) {
+        this.renderHierarchyState(state);
+      }
+
+      lastValue = state.isEnabled;
     });
   }
 
@@ -54,12 +64,12 @@ export class HierarchyTransformer {
      affected.toggleClass(collapsedGroupClass(wpId), isCollapsed);
 
      // Update the hidden section of the rendered state
-     affected.filter(`.${rowClassName}`).each((i, el) => {
+     affected.filter(`.${tableRowClassName}`).each((i, el) => {
        // Get the index of this row
        const index = jQuery(el).index();
 
        // Update the hidden state
-       rendered.renderedOrder[index].hidden = isCollapsed;
+       rendered[index].hidden = isCollapsed;
      });
    });
 

@@ -28,27 +28,27 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-module WorkPackage::CsvExporter
+class WorkPackage::Exporter::CSV < WorkPackage::Exporter::Base
   include Redmine::I18n
   include CustomFieldsHelper
   include ActionView::Helpers::TextHelper
   include ActionView::Helpers::NumberHelper
 
-  def csv(work_packages, query)
-    export = CSV.generate(col_sep: l(:general_csv_separator)) do |csv|
-      headers = csv_headers(query)
-      csv << encode_csv_columns(headers)
+  def list
+    serialized = CSV.generate(col_sep: l(:general_csv_separator)) do |csv|
+      headers = csv_headers
+      csv << self.class.encode_csv_columns(headers)
 
       work_packages.each do |work_package|
-        row = csv_row(work_package, query)
-        csv << encode_csv_columns(row)
+        row = csv_row(work_package)
+        csv << self.class.encode_csv_columns(row)
       end
     end
 
-    export
+    success(serialized)
   end
 
-  def encode_csv_columns(columns, encoding = l(:general_csv_encoding))
+  def self.encode_csv_columns(columns, encoding = l(:general_csv_encoding))
     columns.map do |cell|
       Redmine::CodesetUtil.from_utf8(cell.to_s, encoding)
     end
@@ -56,22 +56,42 @@ module WorkPackage::CsvExporter
 
   private
 
+  def success(serialized)
+    WorkPackage::Exporter::Success
+      .new format: :csv,
+           title: title,
+           content: serialized,
+           mime_type: 'text/csv'
+  end
+
+  def title
+    title = query.new_record? ? l(:label_work_package_plural) : query.name
+
+    "#{title}.csv"
+  end
+
   # fetch all headers
-  def csv_headers(query)
+  def csv_headers
     headers = []
 
-    query.columns.each_with_index do |column, _|
+    valid_export_columns.each_with_index do |column, _|
       headers << column.caption
     end
 
     headers << CustomField.human_attribute_name(:description)
 
+    # because of
+    # https://support.microsoft.com/en-us/help/323626/-sylk-file-format-is-not-valid-error-message-when-you-open-file
+    if headers[0].start_with?('ID')
+      headers[0] = headers[0].downcase
+    end
+
     headers
   end
 
   # fetch all row values
-  def csv_row(work_package, query)
-    row = query.columns.collect do |column|
+  def csv_row(work_package)
+    row = valid_export_columns.collect do |column|
       csv_format_value(work_package, column)
     end
 
@@ -88,7 +108,7 @@ module WorkPackage::CsvExporter
   end
 
   def csv_format_value(work_package, column)
-    if column.is_a?(QueryCustomFieldColumn)
+    if column.is_a?(Queries::WorkPackages::Columns::CustomFieldColumn)
       csv_format_custom_value(work_package, column)
     else
       value = work_package.send(column.name)

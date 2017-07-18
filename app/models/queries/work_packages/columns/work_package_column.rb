@@ -28,67 +28,9 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-class QueryColumn
-  attr_accessor :name,
-                :sortable,
-                :groupable,
-                :summable,
-                :available,
-                :default_order
-  alias_method :summable?, :summable
-  include Redmine::I18n
-
-  def initialize(name, options = {})
-    self.name = name
-
-    %i(sortable
-       groupable
-       summable
-       default_order).each do |attribute|
-      send("#{attribute}=", options[attribute])
-    end
-
-    self.available = options.fetch(:available, true)
-
-    @caption_key = options[:caption] || name.to_s
-  end
-
+class Queries::WorkPackages::Columns::WorkPackageColumn < Queries::Columns::Base
   def caption
-    WorkPackage.human_attribute_name(@caption_key)
-  end
-
-  def groupable=(value)
-    @groupable = name_or_value_or_false(value)
-  end
-
-  def sortable=(value)
-    @sortable =  name_or_value_or_false(value)
-  end
-
-  # Returns true if the column is sortable, otherwise false
-  def sortable?
-    !!sortable
-  end
-
-  # Returns true if the column is groupable, otherwise false
-  def groupable?
-    !!groupable
-  end
-
-  def value(issue)
-    issue.send name
-  end
-
-  def available?
-    available
-  end
-
-  def available
-    if name == :done_ratio
-      !WorkPackage.done_ratio_disabled?
-    else
-      @available
-    end
+    WorkPackage.human_attribute_name(name)
   end
 
   def sum_of(work_packages)
@@ -98,22 +40,6 @@ class QueryColumn
       work_packages.map { |wp| value(wp) }.compact.reduce(:+)
     else
       work_packages.sum(name)
-    end
-  end
-
-  protected
-
-  def name_or_value_or_false(value)
-    # This is different from specifying value = nil in the signature
-    # in that it will also set the value to false if nil is provided.
-    value ||= false
-
-    # Explicitly checking for true because apparently, we do not want
-    # truish values to count here.
-    if value == true
-      name.to_s
-    else
-      value
     end
   end
 end

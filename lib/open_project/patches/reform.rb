@@ -1,3 +1,5 @@
+#-- encoding: UTF-8
+
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -26,37 +28,27 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-require 'spec_helper'
-require_relative 'shared_query_column_specs'
+module OpenProject
+  module Patches
+    module Reform
+      def merge!(errors, prefix)
+        @store_new_symbols = false
+        super(errors, prefix)
+        @store_new_symbols = true
 
-describe ::QueryCustomFieldColumn, type: :model do
-  let(:custom_field) {
-    mock_model(CustomField, field_format: 'string',
-                            order_statements: nil)
-  }
-  let(:instance) { described_class.new(custom_field) }
+        errors.keys.each do |attribute|
+          errors.symbols_and_messages_for(attribute).each do |symbol, full_message, partial_message|
+            symbols_and_messages = writable_symbols_and_messages_for(attribute)
+            next if symbols_and_messages && symbols_and_messages.any? do |sam|
+              sam[0] === symbol &&
+              sam[1] === full_message &&
+              sam[2] === partial_message
+            end
 
-  it_behaves_like 'query column'
-
-  describe '#available?' do
-    context 'for text custom fields' do
-      let(:custom_field) {
-        mock_model(CustomField, field_format: 'text',
-                                order_statements: nil)
-      }
-
-      it 'is false for long text custom fields' do
-        expect(instance.available?).to be_falsey
+            symbols_and_messages << [symbol, full_message, partial_message]
+          end
+        end
       end
-    end
-  end
-
-  describe '#value' do
-    let(:mock) { double(WorkPackage) }
-
-    it 'delegates to typed_custom_value_for' do
-      expect(mock).to receive(:typed_custom_value_for).with(custom_field.id)
-      instance.value(mock)
     end
   end
 end

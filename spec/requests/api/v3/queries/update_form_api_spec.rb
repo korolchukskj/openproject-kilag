@@ -49,6 +49,7 @@ describe "POST /api/v3/queries/form", type: :request do
       user: user
     )
   end
+  let(:additional_setup) {}
 
   let(:parameters) { {} }
   let(:override_params) { {} }
@@ -58,6 +59,8 @@ describe "POST /api/v3/queries/form", type: :request do
     project.add_member! user, role
 
     login_as(user)
+
+    additional_setup
 
     post path,
          params: parameters.merge(override_params).to_json,
@@ -105,6 +108,126 @@ describe "POST /api/v3/queries/form", type: :request do
 
       it "has the correct method" do
         expect(form.dig("_links", "commit", "method")).to eq "patch"
+      end
+    end
+
+    describe 'columns' do
+      let(:custom_field) do
+        cf = FactoryGirl.create(:list_wp_custom_field)
+        project.work_package_custom_fields << cf
+        cf.types << project.types.first
+
+        cf
+      end
+
+      let(:non_project_type) do
+        FactoryGirl.create(:type)
+      end
+
+      let(:additional_setup) do
+        custom_field
+
+        non_project_type
+      end
+
+      context 'within a project' do
+        it 'has the static, custom field and relation columns' do
+          expected_columns = (%w(id project assignee author
+                                 category createdAt dueDate estimatedTime
+                                 parent percentageDone priority responsible
+                                 spentTime startDate status subject type
+                                 updatedAt version) + ["customField#{custom_field.id}"]).map do |id|
+            {
+              '_type': 'QueryColumn::Property',
+              'id': id
+            }
+          end
+
+          expected_columns += project.types.map do |type|
+            {
+              '_type': 'QueryColumn::RelationToType',
+              'id': "relationsToType#{type.id}"
+            }
+          end
+
+          expected_columns += Relation::TYPES.map do |_, value|
+            {
+              '_type': 'QueryColumn::RelationOfType',
+              'id': "relationsOfType#{value[:sym].camelcase}"
+            }
+          end
+
+          actual_columns = form.dig('_embedded',
+                                    'schema',
+                                    'columns',
+                                    '_embedded',
+                                    'allowedValues')
+                               .map do |column|
+                                 {
+                                   '_type': column['_type'],
+                                   'id': column['id']
+                                 }
+                               end
+
+          non_project_type_hash = {
+            '_type': 'QueryColumn::Relation',
+            'id': "relationsToType#{non_project_type.id}"
+          }
+
+          expect(actual_columns).to include(*expected_columns)
+          expect(actual_columns).not_to include(non_project_type_hash)
+        end
+      end
+
+      context 'globally (no project)' do
+        let(:additional_setup) do
+          custom_field
+
+          non_project_type
+
+          query.update_attribute(:project, nil)
+        end
+
+        it 'has the static, custom field and relation columns' do
+          expected_columns = (%w(id project assignee author
+                                 category createdAt dueDate estimatedTime
+                                 parent percentageDone priority responsible
+                                 spentTime startDate status subject type
+                                 updatedAt version) + ["customField#{custom_field.id}"]).map do |id|
+            {
+              '_type': 'QueryColumn::Property',
+              'id': id
+            }
+          end
+
+          expected_columns += Type.all.map do |type|
+            {
+              '_type': 'QueryColumn::RelationToType',
+              'id': "relationsToType#{type.id}"
+            }
+          end
+
+          expected_columns += Relation::TYPES.map do |_, value|
+            {
+              '_type': 'QueryColumn::RelationOfType',
+              'id': "relationsOfType#{value[:sym].camelcase}"
+            }
+          end
+
+          actual_columns = form.dig('_embedded',
+                                    'schema',
+                                    'columns',
+                                    '_embedded',
+                                    'allowedValues')
+                               .map do |column|
+                                 {
+                                   '_type': column['_type'],
+                                   'id': column['id']
+                                 }
+                               end
+
+          expect(actual_columns).to include(*expected_columns)
+        end
       end
     end
   end

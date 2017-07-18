@@ -1,4 +1,3 @@
-#-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
 # Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
@@ -27,32 +26,47 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-require_relative 'shared/user_feedback'
+require 'spec_helper'
+require_relative 'shared_query_column_specs'
 
-namespace :migrations do
-  namespace :attachments do
-    include ::Tasks::Shared::UserFeedback
+describe Queries::WorkPackages::Columns::RelationToTypeColumn, type: :model do
+  let(:project) { FactoryGirl.build_stubbed(:project) }
+  let(:type) { FactoryGirl.build_stubbed(:type) }
+  let(:instance) { described_class.new(type) }
 
-    desc 'Removes all attachments from versions and projects'
-    task delete_from_projects_and_versions: :environment do |_task|
-      try_delete_attachments_from_projects_and_versions
-    end
+  it_behaves_like 'query column'
 
-    def try_delete_attachments_from_projects_and_versions
-      if !$stdout.isatty || user_agrees_to_delete_versions_and_projects_documents
-        puts 'Delete all attachments attached to projects or versions...'
-
-        Attachment.where(container_type: ['Version', 'Project']).destroy_all
+  describe 'instances' do
+    context 'within project' do
+      before do
+        allow(project)
+          .to receive(:types)
+          .and_return([type])
       end
-    rescue
-      raise 'Cannot delete attachments from projects and versions! There may be migrations missing...?'
+
+      it 'contains the type columns' do
+        expect(described_class.instances(project).length)
+          .to eq 1
+
+        expect(described_class.instances(project)[0].type)
+          .to eq type
+      end
     end
 
-    def user_agrees_to_delete_versions_and_projects_documents
-      questions = ['CAUTION: This rake task will delete ALL attachments attached to versions or projects!',
-                   "DISCLAIMER: This is the final warning: You're going to lose information!"]
+    context 'global' do
+      before do
+        allow(Type)
+          .to receive(:all)
+          .and_return([type])
+      end
 
-      ask_for_confirmation(questions)
+      it 'contains the type columns' do
+        expect(described_class.instances.length)
+          .to eq 1
+
+        expect(described_class.instances[0].type)
+          .to eq type
+      end
     end
   end
 end

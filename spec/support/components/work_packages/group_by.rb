@@ -26,24 +26,45 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-require 'spec_helper'
-require_relative 'shared_query_column_specs'
+module Components
+  module WorkPackages
+    class GroupBy
+      include Capybara::DSL
+      include RSpec::Matchers
 
-describe ::QueryColumn, type: :model do
-  let(:instance) { QueryColumn.new(:query_column) }
+      def enable_via_header(name)
+        open_table_column_context_menu(name)
 
-  it_behaves_like 'query column'
+        within_column_context_menu do
+          click_link('Group by')
+        end
+      end
 
-  describe '#available?' do
-    context ':done_ratio column' do
-      let(:instance) { QueryColumn.new(:done_ratio) }
+      def enable_via_menu(name)
+        SettingsMenu.new.open_and_choose('Group by ...')
 
-      it 'is not available if the setting disables it' do
-        allow(WorkPackage)
-          .to receive(:done_ratio_disabled?)
-          .and_return(true)
+        select name, from: 'selected_columns_new'
+        click_button 'Apply'
+      end
 
-        expect(instance).to_not be_available
+      def expect_not_grouped_by(name)
+        open_table_column_context_menu(name)
+
+        within_column_context_menu do
+          expect(page).to have_content('Group by')
+        end
+      end
+
+      private
+
+      def open_table_column_context_menu(name)
+        page.find(".generic-table--sort-header ##{name.downcase}").click
+      end
+
+      def within_column_context_menu
+        page.within('#column-context-menu') do
+          yield
+        end
       end
     end
   end
