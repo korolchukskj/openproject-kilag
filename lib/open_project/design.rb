@@ -31,8 +31,8 @@ module OpenProject
   class Design
     DEFAULTS = {
       'primary-color'                                        => "#252122",
-      'primary-color-dark'                                   => "#06799F",
-      'alternative-color'                                    => "#35C53F",
+      'primary-color-dark'                                   => "#1E1B1C",
+      'alternative-color'                                    => "#64a628",
       'body-font-family'                                     => "'Lato', 'Lucida Grande', Helvetica, Arial, sans-serif",
       'gray'                                                 => "#EAEAEA",
       'gray-dark'                                            => "#878787",
