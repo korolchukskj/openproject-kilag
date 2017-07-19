@@ -30,9 +30,9 @@
 module OpenProject
   class Design
     DEFAULTS = {
-      'primary-color'                                        => "#3493B3",
-      'primary-color-dark'                                   => "#06799F",
-      'alternative-color'                                    => "#35C53F",
+      'primary-color'                                        => "#252122",
+      'primary-color-dark'                                   => "#1E1B1C",
+      'alternative-color'                                    => "#64a628",
       'body-font-family'                                     => "'Lato', 'Lucida Grande', Helvetica, Arial, sans-serif",
       'gray'                                                 => "#EAEAEA",
       'gray-dark'                                            => "#878787",
@@ -59,7 +59,7 @@ module OpenProject
       'header-height'                                        => "55px",
       'header-height-mobile'                                 => "45px",
       'header-bg-color'                                      => "$primary-color",
-      'header-home-link-bg'                                  => '#{image-url("logo_openproject_white_big.png") no-repeat 20px 0}',
+      'header-home-link-bg'                                  => '#{image-url("logo_kilag.png") no-repeat 20px 0}',
       'header-border-bottom-color'                           => "$primary-color",
       'header-border-bottom-width'                           => "0",
       'header-item-font-size'                                => "14px",
