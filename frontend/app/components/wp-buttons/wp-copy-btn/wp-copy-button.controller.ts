@@ -155,7 +155,7 @@ export default class WorkPackageCopyButtonController {
                "href": "/api/v3/types/3"
              },
              "status": {
-               "href": "/api/v3/statuses/1"
+               "href": "/api/v3/statuses/16"
              },
              "priority": {
                "href": "/api/v3/priorities/8",
@@ -204,7 +204,7 @@ export default class WorkPackageCopyButtonController {
                              "href": item.data._embedded.type._links.self.href
                            },
                            "status": {
-                             "href": "/api/v3/statuses/1"
+                             "href": "/api/v3/statuses/16"
                            },
                            "priority": {
                              "href": "/api/v3/priorities/8",
