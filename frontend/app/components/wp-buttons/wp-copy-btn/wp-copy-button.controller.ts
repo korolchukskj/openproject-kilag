@@ -50,6 +50,15 @@ export default class WorkPackageCopyButtonController {
     this.text = {
       copyButton: 'Copy'
     }
+
+    // setTimeout(() => {
+    //   this.$http.get('/api/v3/queries/7?offset=1&pageSize=100').then((response:any) => {
+    //     console.log('QUERIES: ', response);
+    //
+    //     this.loadingIndicator.table.promise = this.wpListService.reloadQuery(response.data);
+    //
+    //   });
+    // }, 7000);
   }
 
   public copySelectedWorkPackages(link:any) {
@@ -107,12 +116,13 @@ export default class WorkPackageCopyButtonController {
 
       // Create parent sub-project work package;
       console.log('VIEW WORK PACKAGE: ', parentWorkPackageResponse);
+      console.log('STATE PARAMS: ', this.$state.params['projectPath']);
 
       this.createWorkPackage(this.$state.params['projectPath'])
         .then(wp => {
 
           this.$http.post('/api/v3/work_packages?notify=true', {
-           "project": "demo-project",
+           "project": this.$state.params['projectPath'],
            "subject": parentWorkPackageResponse.data.subject,
            "parentId": "",
            "lockVersion": lockVersion,
