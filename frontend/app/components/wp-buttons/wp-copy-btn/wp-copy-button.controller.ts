@@ -130,6 +130,7 @@ export default class WorkPackageCopyButtonController {
              "format": "textile",
              "raw": ""
            },
+           "_type": "WorkPackage",
            "_links": {
              "project": {
           			"href": "/api/v3/projects/1"
