@@ -181,7 +181,7 @@ export default class WorkPackageCopyButtonController {
                            "format": "textile",
                            "raw": ""
                          },
-                         "_links":  Object.assign({}, item.data._embedded.project._links)
+                         "_links":  Object.assign({}, item.data._links)
                         }).then((response) => {
 
                         }).catch((error) => {
