@@ -118,6 +118,22 @@ export default class WorkPackageCopyButtonController {
       console.log('VIEW WORK PACKAGE: ', parentWorkPackageResponse);
       console.log('STATE PARAMS: ', this.$state.params['projectPath']);
 
+
+
+      this.$http.get('/api/v3/types').then((response) => {
+        console.log('TYPE: ', response);
+      })
+
+      this.$http.get('/api/v3/priorities').then((response) => {
+        console.log('PRIORITY: ', response);
+      });
+
+      this.$http.get('/api/v3/statuses').then((response) => {
+        console.log('STATUS: ', response);
+      });
+
+
+
       this.createWorkPackage(this.$state.params['projectPath'])
         .then(wp => {
 
