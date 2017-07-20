@@ -86,6 +86,10 @@ export default class WorkPackageCopyButtonController {
     let parentId:number = selectedPakcage[0].$source.id
     let lockVersion:number = 0;
 
+    let typeId:number = 0;
+    let statusId:number = 0;
+    let priorityId:number = 0;
+
 
     // this.WorkPackageButtonsService.copyPakcage(parentId).then((response:any) => {
     //   console.log('WORK PACKAGE SERVICE: ', response);
@@ -120,18 +124,14 @@ export default class WorkPackageCopyButtonController {
 
 
 
-      this.$http.get('/api/v3/types').then((response) => {
-        console.log('TYPE: ', response);
-      })
+      Promise.all([this.$http.get('/api/v3/types'),
+        this.$http.get('/api/v3/priorities'),
+        this.$http.get('/api/v3/statuses')]).then((response:any) => {
 
-      this.$http.get('/api/v3/priorities').then((response) => {
-        console.log('PRIORITY: ', response);
+        console.log('TYPE: ', response[0]);
+        console.log('PRIORITY: ', response[1]);
+        console.log('STATUS: ', response[2]);
       });
-
-      this.$http.get('/api/v3/statuses').then((response) => {
-        console.log('STATUS: ', response);
-      });
-
 
 
       this.createWorkPackage(this.$state.params['projectPath'])
@@ -146,22 +146,7 @@ export default class WorkPackageCopyButtonController {
              "format": "textile",
              "raw": ""
            },
-           "_type": "WorkPackage",
-           "_links": {
-             "project": {
-          			"href": "/api/v3/projects/1"
-          		},
-             "type": {
-               "href": "/api/v3/types/3"
-             },
-             "status": {
-               "href": "/api/v3/statuses/16"
-             },
-             "priority": {
-               "href": "/api/v3/priorities/8",
-               "title": "Normal"
-             }
-           }
+           "_links": Object.assign({}, parentWorkPackageResponse.data._links)
          }).then((response:any) => {
 
             console.log('CREATE PACKAGE RESPONSE: ', response);
@@ -196,21 +181,7 @@ export default class WorkPackageCopyButtonController {
                            "format": "textile",
                            "raw": ""
                          },
-                         "_links": {
-                           "project": {
-                        			"href": "/api/v3/projects/1"
-                        		},
-                           "type": {
-                             "href": item.data._embedded.type._links.self.href
-                           },
-                           "status": {
-                             "href": "/api/v3/statuses/16"
-                           },
-                           "priority": {
-                             "href": "/api/v3/priorities/8",
-                             "title": "Normal"
-                           }
-                         }
+                         "_links":  Object.assign({}, item.data._embedded.project._links)
                         }).then((response) => {
 
                         }).catch((error) => {
