@@ -59,6 +59,12 @@ export default class WorkPackageCopyButtonController {
     //
     //   });
     // }, 7000);
+
+
+
+    // this.$http.get('/api/v3/queries/1').then((response:any) => {
+    //   this.loadingIndicator.table.promise = this.wpListService.reloadQuery(response.data);
+    // });
   }
 
   public copySelectedWorkPackages(link:any) {
