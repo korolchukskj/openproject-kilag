@@ -115,6 +115,7 @@ export class WorkPackageTableSumsRowController {
   private appendFirstLabel(div:HTMLElement) {
     const span = document.createElement('span');
     span.textContent = `${this.text.sumFor} ${this.text.allWorkPackages}`;
+    span.classList.add('sum_label');
     jQuery(div).prepend(span);
   }
 }
