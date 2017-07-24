@@ -124,14 +124,14 @@ export default class WorkPackageCopyButtonController {
 
 
 
-      Promise.all([this.$http.get('/api/v3/types'),
-        this.$http.get('/api/v3/priorities'),
-        this.$http.get('/api/v3/statuses')]).then((response:any) => {
-
-        console.log('TYPE: ', response[0]);
-        console.log('PRIORITY: ', response[1]);
-        console.log('STATUS: ', response[2]);
-      });
+      // Promise.all([this.$http.get('/api/v3/types'),
+      //   this.$http.get('/api/v3/priorities'),
+      //   this.$http.get('/api/v3/statuses')]).then((response:any) => {
+      //
+      //   console.log('TYPE: ', response[0]);
+      //   console.log('PRIORITY: ', response[1]);
+      //   console.log('STATUS: ', response[2]);
+      // });
 
 
       this.createWorkPackage(this.$state.params['projectPath'])
