@@ -35,7 +35,7 @@ function WorkPackagesController($scope, $state, $stateParams, $rootScope) {
   // Setup
   $scope.$state = $state;
   $scope.selectedTitle = I18n.t('js.label_work_package_plural');
-  $scope.query_id = 1;
+  $scope.query_id = $stateParams.query_id;
 
   $scope.getToggleActionLabel = function(active) {
     return (active) ? I18n.t('js.label_deactivate') : I18n.t('js.label_activate');

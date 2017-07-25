@@ -16,6 +16,7 @@ import {WorkPackagesListService} from '../../wp-list/wp-list.service';
 import {States} from "../../states.service";
 
 import {LoadingIndicatorService} from '../../common/loading-indicator/loading-indicator.service';
+import {WorkPackagesListChecksumService} from "../../wp-list/wp-list-checksum.service";
 
 import IPromise = angular.IPromise;
 
@@ -34,6 +35,7 @@ export default class WorkPackageCopyButtonController {
   constructor(public $scope:ng.IScope,
               public wpTableSelection:WorkPackageTableSelection,
               public loadingIndicator: LoadingIndicatorService,
+              protected wpListChecksumService:WorkPackagesListChecksumService,
               protected $http:ng.IHttpService,
               protected $window:ng.IWindowService,
               protected $state:ng.ui.IStateService,
@@ -60,11 +62,13 @@ export default class WorkPackageCopyButtonController {
     //   });
     // }, 7000);
 
+    console.log($state);
+    alert('state');
 
-
-    // this.$http.get('/api/v3/queries/1').then((response:any) => {
-    //   this.loadingIndicator.table.promise = this.wpListService.reloadQuery(response.data);
-    // });
+    if (this.$state.params.query_id != 1) {
+      // wpListChecksumService.clear();
+      loadingIndicator.table.promise = wpListService.fromQueryParams({ query_id: 1 }, $scope.projectIdentifier);
+    }
   }
 
   public copySelectedWorkPackages(link:any) {
