@@ -42,7 +42,6 @@ module.exports = function(menuItemFactory, $state, $stateParams, $animate, $time
       scope.queryId = scope.objectId || attrs.objectId;
       scope.uiRouteStateName = 'work-packages.list';
 
-      alert('queryId: ' + scope.queryId + '\nuiRouteStateName: ' + scope.uiRouteStateName + '\nattrs: ' + JSON.stringify(attrs));
       // Remove any query_props value
       scope.uiRouteParams = '{ query_props: null, query_id: ' + scope.queryId + ' }';
 

@@ -67,10 +67,11 @@ export default class WorkPackageCopyButtonController {
     // console.log(this.$state.params.query_id);
     // alert('state');
 
-    // if (!this.$state.params.query_id && this.$state.params.query_id != 1) {
-      // wpListChecksumService.clear();
-      // loadingIndicator.table.promise = wpListService.fromQueryParams({ query_id: 1 }, $scope.projectIdentifier);
-    // }
+    if (!this.$state.params.query_id && this.$state.params.query_id != 1) {
+      document.getElementsByClassName('loading-indicator--background')[0].remove();
+      wpListChecksumService.clear();
+      loadingIndicator.table.promise = wpListService.fromQueryParams({ query_id: 1 }, $scope.projectIdentifier);
+    }
   }
 
   public copySelectedWorkPackages(link:any) {
