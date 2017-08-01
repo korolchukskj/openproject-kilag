@@ -117,5 +117,3 @@ export function calculatePositionValueForDayCount(viewParams: TimelineViewParame
   const value = calculatePositionValueForDayCountingPx(viewParams, days);
     return value + "px";
 }
-
-

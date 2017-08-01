@@ -1,3 +1,4 @@
+
 import {injectorBridge} from "../../../angular/angular-injector-bridge.functions";
 import {States} from "../../../states.service";
 import {collapsedGroupClass, hierarchyGroupClass, hierarchyRootClass} from "../../helpers/wp-table-hierarchy-helpers";
@@ -44,6 +45,30 @@ export class HierarchyTransformer {
 
    // Hide all collapsed hierarchies
    _.each(state.collapsed, (isCollapsed:boolean, wpId:string) => {
+
+
+     if(isCollapsed) {
+       console.log(isCollapsed, wpId);
+       let timelineElm = jQuery(`.wp-table-timeline--body .${hierarchyGroupClass(wpId)}`);
+       console.log('timelineElm: ', timelineElm);
+       jQuery(`#wp-timeline-row-${wpId}`).addClass('collapsed-timeline-chart');
+
+      /* Clone the HTML bar chart elements */
+      for(let i = 0; i < timelineElm.length; i++) {
+        console.log(timelineElm[i]);
+
+        jQuery(timelineElm[i]).clone().appendTo(`#wp-timeline-row-${wpId}`);
+      }
+    } else {
+      jQuery(`#wp-timeline-row-${wpId}`).removeClass('collapsed-timeline-chart');
+      // console.log('ELEMENT: ', jQuery(`#wp-timeline-row-${wpId} [class^="__hierarchy-group-"]`));
+      console.log('ELEMENT: ', jQuery(`#wp-timeline-row-${wpId} .wp-timeline-cell`));
+      jQuery(`#wp-timeline-row-${wpId} .wp-timeline-cell`).remove();
+      // jQuery(`#wp-timeline-row-${wpId} '[class^="__hierarchy-group-"]'`).remove();
+    }
+
+    //  console.log(jQuery(`.${hierarchyRootClass(wpId)})`));
+
      // Toggle the root style
      jQuery(`.${hierarchyRootClass(wpId)} .wp-table--hierarchy-indicator`).toggleClass(indicatorCollapsedClass, isCollapsed);
 
