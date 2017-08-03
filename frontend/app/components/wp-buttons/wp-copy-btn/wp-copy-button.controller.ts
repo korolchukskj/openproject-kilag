@@ -61,8 +61,8 @@ export default class WorkPackageCopyButtonController {
     }
 
     /* TODO: list of types needed to show like checkbox es */
-    this.$http.get('/api/v3/types').then((response) => {
-      console.log(response);
+    this.$http.get('/api/v3/types').then((response: any) => {
+      console.log(response.data._embedded.elements);
       alert('hello');
     })
   }
