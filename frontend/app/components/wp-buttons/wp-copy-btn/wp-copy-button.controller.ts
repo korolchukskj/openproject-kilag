@@ -49,47 +49,22 @@ export default class WorkPackageCopyButtonController {
               protected $location:ng.ILocationService,
               protected wpNotificationsService: WorkPackageNotificationService,
               protected wpListService:WorkPackagesListService) {
+
     this.text = {
       copyButton: 'Copy'
     }
-
-    // setTimeout(() => {
-    //   this.$http.get('/api/v3/queries/7?offset=1&pageSize=100').then((response:any) => {
-    //     console.log('QUERIES: ', response);
-    //
-    //     this.loadingIndicator.table.promise = this.wpListService.reloadQuery(response.data);
-    //
-    //   });
-    // }, 7000);
-
-    // console.log($state);
-    // console.log($state.current);
-    // console.log(this.$state.params.query_id);
-    // alert('state');
 
     if (!this.$state.params.query_id && this.$state.params.query_id != 1) {
       document.getElementsByClassName('loading-indicator--background')[0].remove();
       wpListChecksumService.clear();
       loadingIndicator.table.promise = wpListService.fromQueryParams({ query_id: 1 }, $scope.projectIdentifier);
     }
-  }
 
-  public copySelectedWorkPackages(link:any) {
-    let selected = this.getSelectedWorkPackages();
-
-    if (selected.length > 1) {
-      this.$window.location.href = link;
-      return;
-    }
-
-    var params = {
-      copiedFromWorkPackageId: selected[0].id
-    };
-
-    this.$state.transitionTo('work-packages.list.copy', params);
-
-    console.log('wpEditModeState: ', this.wpEditModeState);
-    this.wpEditModeState.save();
+    /* TODO: list of types needed to show like checkbox es */
+    this.$http.get('/api/v3/types').then((response) => {
+      console.log(response);
+      alert('hello');
+    })
   }
 
   public copyWorkPackage() {
