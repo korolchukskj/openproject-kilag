@@ -169,6 +169,8 @@ export default class WorkPackageCopyButtonController {
                            "format": "textile",
                            "raw": ""
                          },
+                         "startDate": item.data.startDate,
+                         "dueDate": item.data.dueDate,
                          "_links":  Object.assign({}, item.data._links)
                         }).then((response) => {
 
