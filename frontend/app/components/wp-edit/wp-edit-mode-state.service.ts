@@ -56,6 +56,13 @@ export class WorkPackageEditModeStateService {
     });
   }
 
+  public getFieldValue(fieldName: string): any {
+    if (this.form.fields[fieldName]) {
+      return this.form.fields[fieldName].field.value;
+    }
+    return ;
+  }
+
   public start():boolean {
     if (!this.active && !!this.form) {
       this.form.toggleEditMode(true);

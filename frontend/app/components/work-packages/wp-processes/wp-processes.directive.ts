@@ -34,6 +34,7 @@ import {DisplayField} from "../../wp-display/wp-display-field/wp-display-field.m
 import {WorkPackageDisplayFieldService} from "../../wp-display/wp-display-field/wp-display-field.service";
 import {WorkPackageEditFormController} from "../../wp-edit/wp-edit-form.directive";
 import {WorkPackageCacheService} from "../work-package-cache.service";
+import {WorkPackageEditModeStateService} from "../../wp-edit/wp-edit-mode-state.service";
 
 interface FieldDescriptor {
   name:string;
@@ -70,7 +71,8 @@ export class WorkPackageProcessesViewController {
               protected $stateParams:ng.ui.IStateParamsService,
               protected I18n:op.I18n,
               protected wpDisplayField:WorkPackageDisplayFieldService,
-              protected wpCacheService:WorkPackageCacheService) {
+              protected wpCacheService:WorkPackageCacheService,
+              protected wpEditModeState: WorkPackageEditModeStateService) {
 
     // Subscribe to work package
     const workPackageId = this.workPackage ? this.workPackage.id : $stateParams['workPackageId'];
@@ -82,6 +84,11 @@ export class WorkPackageProcessesViewController {
       });
   }
 
+  public getForm() {
+    console.log('++form startDate', this.wpEditModeState.getFieldValue('startDate'));
+    console.log('++form dueDate', this.wpEditModeState.getFieldValue('dueDate'));
+  }
+
   private init(wp:WorkPackageResourceInterface) {
     this.workPackage = wp;
 
@@ -90,7 +97,9 @@ export class WorkPackageProcessesViewController {
       console.log(response.data._embedded.elements);
 
       this.text = 'another text';
-      alert('response');
+      // alert('response');
+
+      this.getForm();
     })
   }
 
