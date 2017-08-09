@@ -1,6 +1,12 @@
-<!-- <p ng-repeat="type in $ctrl.typesList track by $index">
-  <h1>{{type.name}}</h1>
-</p> -->
 <h1>wp-processes-view</h1>
+
+<div ng-repeat="type in $ctrl.typesList track by $index" style="background-color: lightcoral;">
+  <h3>{{ type.name }}</h3>
+
+  <input type="checkbox" ng-model="type.checked" ng-change="$ctrl.calculatePeriod($ctrl.typesList)">
+
+  <span>duration: {{ type.duration }}
+  <span>wait: {{ type.wait }}
+</div>
 
 <button ng-click="$ctrl.getForm()">get form</button>

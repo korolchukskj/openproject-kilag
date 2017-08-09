@@ -61,7 +61,7 @@ export class WorkPackageProcessesViewController {
   public hideEmptyFields: boolean = true;
   public text: any;
   public scope: any;
-  public typesList:any;
+  public typesList:any = [];
 
   protected firstTimeFocused: boolean = false;
 
@@ -89,12 +89,36 @@ export class WorkPackageProcessesViewController {
     console.log('++form dueDate', this.wpEditModeState.getFieldValue('dueDate'));
   }
 
+  public calculatePeriod(types: any) {
+    console.log('++types', types);
+
+    let period = 0;
+
+    types.forEach((type: any) => {
+      if (type['checked'] === true) {
+        period += type['duration'] + type['wait'];
+      }
+    });
+
+    console.log('++period', period);
+  }
+
   private init(wp:WorkPackageResourceInterface) {
     this.workPackage = wp;
 
     /* TODO: list of types needed to show like checkbox es */
     this.$http.get('/api/v3/types').then((response: any) => {
       console.log(response.data._embedded.elements);
+
+      this.typesList = [].concat(response.data._embedded.elements.map((el: any, index: number) => {
+        return {
+          name: el.name,
+          duration: index + 1,
+          wait: index + 1,
+          checked: false
+        };
+      }));
+      console.log('++this.typesList', this.typesList);
 
       this.text = 'another text';
       // alert('response');
