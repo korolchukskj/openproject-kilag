@@ -63,7 +63,6 @@ export default class WorkPackageCopyButtonController {
     /* TODO: list of types needed to show like checkbox es */
     this.$http.get('/api/v3/types').then((response: any) => {
       console.log(response.data._embedded.elements);
-      alert('hello');
     })
   }
 
@@ -71,7 +70,8 @@ export default class WorkPackageCopyButtonController {
     let wpObjectToBeCreated = {};
     let selectedPakcage:any = this.getSelectedWorkPackages();
 
-    let parentId:number = selectedPakcage[0].$source.id
+    let parentId:number = selectedPakcage[0].$source.id;
+    let grandParentId:number = selectedPakcage[0].$source.parentId;
     let lockVersion:number = 0;
 
     let typeId:number = 0;
@@ -128,7 +128,7 @@ export default class WorkPackageCopyButtonController {
           this.$http.post('/api/v3/work_packages?notify=true', {
            "project": this.$state.params['projectPath'],
            "subject": parentWorkPackageResponse.data.subject,
-           "parentId": "",
+           "parentId": grandParentId ? grandParentId : '',
            "lockVersion": lockVersion,
            "description": {
              "format": "textile",
