@@ -94,7 +94,13 @@ export class WorkPackageProcessesViewController {
       let subscription = wpCacheService.onNewWorkPackage().subscribe((wp: any) => {
         this.parentWP = wp;
         console.log('++onNewWorkPackage success', wp);
-        this.addTaskToSubtask();
+
+        let subTasks = this.buildTasksList(this.typesList);
+
+        if (subTasks.length) {
+          // this.addTaskToSubtask(subTasks[0]);
+          this.processAddTasks(subTasks);
+        }
       }, (error: any) => {
         console.log('++onNewWorkPackage error', error);
       });
@@ -109,40 +115,72 @@ export class WorkPackageProcessesViewController {
     console.log('++form dueDate', this.wpEditModeState.getFieldValue('dueDate'));
   }
 
-  public addTaskToSubtask() {
+  public buildTasksList(typesList: Array<any>) {
+    return typesList
+      .filter((task: any) => task.checked)
+      .map((task: any) => {
+        return {
+          subject: task.name,
+          // startDate,
+          // dueDate
+        };
+      });
+  }
+
+  public processAddTasks(taskList: Array<any>) {
+    let listOfPromises:any = [];
+
+    taskList.forEach((task: any) => {
+      listOfPromises.push(
+        this.addTaskToSubtask(task)
+      );
+    });
+
+    console.log('LIST OF PROMISES: ', listOfPromises);
+
+    // show loader
     this.blockViewBeforeSave();
+
+    Promise.all(listOfPromises).then((results) => {
+      // hide loader
+      this.refreshViewAfterSave();
+    }).catch((error) => {
+      throw error;
+    });
+  }
+
+  public addTaskToSubtask(dataParams: any) {
+    // this.blockViewBeforeSave();
 
     console.log('++this.stateParams', this.stateParams);
     console.log('++parentWP', this.parentWP);
 
-    if (this.parentWP) {
-      this.createWorkPackage(this.stateParams['projectPath'])
-        .then(wp => {
+    this.createWorkPackage(this.stateParams['projectPath'])
+      .then(wp => {
 
-          this.$http.post('/api/v3/work_packages?notify=true', {
-           "project": this.stateParams['projectPath'],
-           "subject": 'test', // item.data.subject,
-           "parentId": this.parentWP.id, // 456, // response.data.id,
-           "lockVersion": 0, // lockVersion,
-           "description": {
-             "format": "textile",
-             "raw": ""
-           },
-          //  "startDate": item.data.startDate,
-          //  "dueDate": item.data.dueDate,
-           "_links":  Object.assign({}, this.parentWP.$source._links), // Object.assign({}, item.data._links)
-          }).then((response) => {
-            console.log('++response', response);
+        this.$http.post('/api/v3/work_packages?notify=true', {
+         "project": this.stateParams['projectPath'],
+         "subject": dataParams['subject'], // 'test', // item.data.subject,
+         "parentId": this.parentWP.id, // 456, // response.data.id,
+         "lockVersion": 0, // lockVersion,
+         "description": {
+           "format": "textile",
+           "raw": ""
+         },
+        //  "startDate": dataParams['startDate'], //item.data.startDate,
+        //  "dueDate": dataParams['dueDate'],// item.data.dueDate,
+         "_links":  Object.assign({}, this.parentWP.$source._links), // Object.assign({}, item.data._links)
+        }).then((response) => {
+          console.log('++response', response);
 
-            this.refreshViewAfterSave();
-          }).catch((error) => {
-            throw error;
-          });
-        })
-        .catch(error => {
-          throw error
+          // this.refreshViewAfterSave();
+        }).catch((error) => {
+          throw error;
         });
-    }
+      })
+      .catch(error => {
+        throw error
+      });
   }
 
   public calculatePeriod(types: any) {
