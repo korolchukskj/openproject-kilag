@@ -82,6 +82,12 @@ export class WorkPackageProcessesViewController {
       .subscribe((wp: WorkPackageResourceInterface) => {
         this.init(wp);
       });
+
+      wpCacheService.onNewWorkPackage().subscribe((success: any) => {
+        console.log('++onNewWorkPackage success', success, JSON.stringify(success));
+      }, (error: any) => {
+        console.log('++onNewWorkPackage error', error);
+      });
   }
 
   public getForm() {
