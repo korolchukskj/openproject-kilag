@@ -19,6 +19,7 @@
 
       <wp-processes-view
         ng-if="$ctrl.newWorkPackage.type.name === 'Sub-project'"
+        state-params="$ctrl.$state.params"
         work-package="$ctrl.newWorkPackage"
       ></wp-processes-view>
     </div>
