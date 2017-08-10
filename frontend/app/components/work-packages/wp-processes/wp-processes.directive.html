@@ -5,8 +5,11 @@
 
   <input type="checkbox" ng-model="type.checked" ng-change="$ctrl.calculatePeriod($ctrl.typesList)">
 
-  <span>duration: {{ type.duration }}
-  <span>wait: {{ type.wait }}
+  <span ng-if="type.duration">duration: {{ type.duration }}</span>
+  <span ng-if="type.wait">wait: {{ type.wait }}</span>
+
+  <span ng-if="type.startDate">start: {{ type.startDate }}</span>
+  <span ng-if="type.dueDate">due: {{ type.dueDate }}</span>
 </div>
 
 <button ng-click="$ctrl.addTaskToSubtask()">addTaskToSubtask</button>

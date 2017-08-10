@@ -67,6 +67,7 @@ export class WorkPackageProcessesViewController {
   public stateParams: any;
   public typesList:any = [];
   public parentWP: any;
+  public dueDate: any;
 
   protected firstTimeFocused: boolean = false;
 
@@ -75,6 +76,7 @@ export class WorkPackageProcessesViewController {
               protected $scope:ng.IScope,
               protected $rootScope:ng.IRootScopeService,
               protected $stateParams:ng.ui.IStateParamsService,
+              protected $filter: any,
               protected I18n:op.I18n,
               protected wpDisplayField:WorkPackageDisplayFieldService,
               protected wpCacheService:WorkPackageCacheService,
@@ -115,14 +117,34 @@ export class WorkPackageProcessesViewController {
     console.log('++form dueDate', this.wpEditModeState.getFieldValue('dueDate'));
   }
 
+  public recalculateDates(startDate: Date, typesList: Array<any>) {
+    typesList.forEach((type) => {
+      let to = new Date(startDate),
+          from = new Date(startDate);
+
+      from.setDate(from.getDate() - (type.duration + type.wait));
+
+      type['startDate'] = this.$filter('date')(from, 'yyyy-MM-dd');
+      type['dueDate'] = this.$filter('date')(to, 'yyyy-MM-dd');
+
+      // override startDate
+      // with start Date of prev. type
+      startDate = new Date(from);
+      // endDate = prevStartDate - 1
+      startDate.setDate(startDate.getDate() - 1);
+    });
+
+    return typesList;
+  }
+
   public buildTasksList(typesList: Array<any>) {
     return typesList
       .filter((task: any) => task.checked)
       .map((task: any) => {
         return {
           subject: task.name,
-          // startDate,
-          // dueDate
+          startDate: task.startDate,
+          dueDate: task.dueDate
         };
       });
   }
@@ -167,8 +189,8 @@ export class WorkPackageProcessesViewController {
            "format": "textile",
            "raw": ""
          },
-        //  "startDate": dataParams['startDate'], //item.data.startDate,
-        //  "dueDate": dataParams['dueDate'],// item.data.dueDate,
+         "startDate": dataParams['startDate'], //item.data.startDate,
+         "dueDate": dataParams['dueDate'],// item.data.dueDate,
          "_links":  Object.assign({}, this.parentWP.$source._links), // Object.assign({}, item.data._links)
         }).then((response) => {
           console.log('++response', response);
@@ -212,27 +234,31 @@ export class WorkPackageProcessesViewController {
   }
 
   private init(wp:WorkPackageResourceInterface) {
+    let startDate = new Date(this.wpEditModeState.getFieldValue('dueDate') || '');
     this.workPackage = wp;
 
     /* TODO: list of types needed to show like checkbox es */
-    this.$http.get('/api/v3/types').then((response: any) => {
-      console.log(response.data._embedded.elements);
+    if (this.typesList.length === 0) {
+      this.$http.get('/api/v3/types').then((response: any) => {
+        console.log(response.data._embedded.elements);
 
-      this.typesList = [].concat(response.data._embedded.elements.map((el: any, index: number) => {
-        return {
-          name: el.name,
-          duration: index + 1,
-          wait: index + 1,
-          checked: false
-        };
-      }));
-      console.log('++this.typesList', this.typesList);
+        this.typesList = [].concat(response.data._embedded.elements.map((el: any, index: number) => {
+          return {
+            name: el.name,
+            duration: index + 1,
+            wait: index + 1,
+            checked: false,
+            startDate: '',
+            dueDate: ''
+          };
+        }));
+        console.log('++this.typesList', this.typesList);
 
-      this.text = 'another text';
-      // alert('response');
-
-      this.getForm();
-    })
+        this.typesList = this.recalculateDates(startDate, this.typesList);
+      });
+    } else {
+      this.typesList = this.recalculateDates(startDate, this.typesList);
+    }
   }
 
   protected createWorkPackage(projectIdentififer:string) {
