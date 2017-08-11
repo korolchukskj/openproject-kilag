@@ -86,6 +86,7 @@ export class WorkPackageProcessesViewController {
 
     // Subscribe to work package
     const workPackageId = this.workPackage ? this.workPackage.id : $stateParams['workPackageId'];
+    // Form-change subscription
     scopedObservable(
       $scope,
       wpCacheService.loadWorkPackage(workPackageId).values$())
@@ -93,48 +94,59 @@ export class WorkPackageProcessesViewController {
         this.init(wp);
       });
 
-      let subscription = wpCacheService.onNewWorkPackage().subscribe((wp: any) => {
-        this.parentWP = wp;
-        console.log('++onNewWorkPackage success', wp);
+    // On-Save-Project subscription
+    let subscription = wpCacheService.onNewWorkPackage().subscribe((wp: any) => {
+      this.parentWP = wp;
+      // console.log('++onNewWorkPackage success', wp);
 
-        let subTasks = this.buildTasksList(this.typesList);
+      let subTasks = this.buildTasksList(this.typesList);
 
-        if (subTasks.length) {
-          // this.addTaskToSubtask(subTasks[0]);
-          this.processAddTasks(subTasks);
-        }
-      }, (error: any) => {
-        console.log('++onNewWorkPackage error', error);
-      });
-
-      this.$scope.$on('$destroy', () => {
-        subscription.unsubscribe();
-      });
-  }
-
-  public getForm() {
-    console.log('++form startDate', this.wpEditModeState.getFieldValue('startDate'));
-    console.log('++form dueDate', this.wpEditModeState.getFieldValue('dueDate'));
-  }
-
-  public recalculateDates(startDate: Date, typesList: Array<any>) {
-    typesList.forEach((type) => {
-      let to = new Date(startDate),
-          from = new Date(startDate);
-
-      from.setDate(from.getDate() - (type.duration + type.wait));
-
-      type['startDate'] = this.$filter('date')(from, 'yyyy-MM-dd');
-      type['dueDate'] = this.$filter('date')(to, 'yyyy-MM-dd');
-
-      // override startDate
-      // with start Date of prev. type
-      startDate = new Date(from);
-      // endDate = prevStartDate - 1
-      startDate.setDate(startDate.getDate() - 1);
+      if (subTasks.length) {
+        // this.addTaskToSubtask(subTasks[0]);
+        this.processAddTasks(subTasks);
+      }
+    }, (error: any) => {
+      console.log('++onNewWorkPackage error', error);
     });
 
-    return typesList;
+    // On-Save-Project unsubscribe
+    this.$scope.$on('$destroy', () => {
+      subscription.unsubscribe();
+    });
+  }
+
+  // recalculates start/due Dates of typeList items
+  // from startDate - it is endDate of ParentTask
+  // modifyers this.typeList
+  public recalculateTypeListDates() {
+    let fieldValue = this.wpEditModeState.getFieldValue('dueDate'),
+        startDate = (fieldValue) ? new Date(fieldValue) : '',
+        typesList: Array<any> = this.typesList;
+
+    if (startDate) {
+      typesList.forEach((type) => {
+        if (type.checked) {
+          let to = new Date(startDate),
+              from = new Date(startDate);
+
+          from.setDate(from.getDate() - (type.duration + type.wait));
+
+          type['startDate'] = this.$filter('date')(from, 'yyyy-MM-dd');
+          type['dueDate'] = this.$filter('date')(to, 'yyyy-MM-dd');
+
+          // override startDate
+          // with start Date of prev. type
+          startDate = new Date(from);
+          // endDate = prevStartDate - 1
+          startDate.setDate(startDate.getDate() - 1);
+        } else {
+          type['startDate'] = '';
+          type['dueDate'] = '';
+        }
+      });
+    }
+
+    // console.log('++typesList', typesList);
   }
 
   public buildTasksList(typesList: Array<any>) {
@@ -158,8 +170,6 @@ export class WorkPackageProcessesViewController {
       );
     });
 
-    console.log('LIST OF PROMISES: ', listOfPromises);
-
     // show loader
     this.blockViewBeforeSave();
 
@@ -172,10 +182,8 @@ export class WorkPackageProcessesViewController {
   }
 
   public addTaskToSubtask(dataParams: any) {
-    // this.blockViewBeforeSave();
-
-    console.log('++this.stateParams', this.stateParams);
-    console.log('++parentWP', this.parentWP);
+    // console.log('++this.stateParams', this.stateParams);
+    // console.log('++parentWP', this.parentWP);
 
     this.createWorkPackage(this.stateParams['projectPath'])
       .then(wp => {
@@ -193,9 +201,7 @@ export class WorkPackageProcessesViewController {
          "dueDate": dataParams['dueDate'],// item.data.dueDate,
          "_links":  Object.assign({}, this.parentWP.$source._links), // Object.assign({}, item.data._links)
         }).then((response) => {
-          console.log('++response', response);
-
-          // this.refreshViewAfterSave();
+          // console.log('++response', response);
         }).catch((error) => {
           throw error;
         });
@@ -203,20 +209,6 @@ export class WorkPackageProcessesViewController {
       .catch(error => {
         throw error
       });
-  }
-
-  public calculatePeriod(types: any) {
-    console.log('++types', types);
-
-    let period = 0;
-
-    types.forEach((type: any) => {
-      if (type['checked'] === true) {
-        period += type['duration'] + type['wait'];
-      }
-    });
-
-    console.log('++period', period);
   }
 
   private blockViewBeforeSave() {
@@ -234,10 +226,8 @@ export class WorkPackageProcessesViewController {
   }
 
   private init(wp:WorkPackageResourceInterface) {
-    let startDate = new Date(this.wpEditModeState.getFieldValue('dueDate') || '');
     this.workPackage = wp;
 
-    /* TODO: list of types needed to show like checkbox es */
     if (this.typesList.length === 0) {
       this.$http.get('/api/v3/types').then((response: any) => {
         console.log(response.data._embedded.elements);
@@ -252,12 +242,12 @@ export class WorkPackageProcessesViewController {
             dueDate: ''
           };
         }));
-        console.log('++this.typesList', this.typesList);
+        // console.log('++this.typesList', this.typesList);
 
-        this.typesList = this.recalculateDates(startDate, this.typesList);
+        this.recalculateTypeListDates();
       });
     } else {
-      this.typesList = this.recalculateDates(startDate, this.typesList);
+      this.recalculateTypeListDates();
     }
   }
 

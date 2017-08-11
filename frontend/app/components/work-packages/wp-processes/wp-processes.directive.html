@@ -3,7 +3,7 @@
 <div ng-repeat="type in $ctrl.typesList track by $index" style="background-color: lightcoral;">
   <h3>{{ type.name }}</h3>
 
-  <input type="checkbox" ng-model="type.checked" ng-change="$ctrl.calculatePeriod($ctrl.typesList)">
+  <input type="checkbox" ng-model="type.checked" ng-change="$ctrl.recalculateTypeListDates()">
 
   <span ng-if="type.duration">duration: {{ type.duration }}</span>
   <span ng-if="type.wait">wait: {{ type.wait }}</span>
