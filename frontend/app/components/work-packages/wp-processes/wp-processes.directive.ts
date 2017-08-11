@@ -66,8 +66,13 @@ export class WorkPackageProcessesViewController {
   public scope: any;
   public stateParams: any;
   public typesList:any = [];
+  public typesListOptions:any = [];
   public parentWP: any;
   public dueDate: any;
+
+  public selectModel = {
+    value: ''
+  };
 
   protected firstTimeFocused: boolean = false;
 
@@ -115,10 +120,43 @@ export class WorkPackageProcessesViewController {
     });
   }
 
+  public onSelectOption(optionName: string) {
+    // console.log('++optionName', optionName);
+
+    // operations with typeList
+    let typesListOption = this.typesList.find((el: any) => {
+      return el.name === optionName;
+    });
+
+    let optionIndex = 0;
+    for(var i = 0, len = this.typesList.length; i < len; i++) {
+      if (this.typesList[i].name === optionName) {
+        optionIndex = i;
+        break;
+      }
+    }
+
+    if (typesListOption) {
+      typesListOption['checked'] = true;
+    }
+
+    this.typesList.splice(i, 1);
+    this.typesList.push(typesListOption);
+
+    // operations with typesListOptions
+    let selectedOption = this.typesList.find((el: any) => {
+      return el.name === optionName;
+    });
+
+    selectedOption['visible'] = false;
+
+    this.recalculateTypeListDates(optionName);
+  }
+
   // recalculates start/due Dates of typeList items
   // from startDate - it is endDate of ParentTask
   // modifyers this.typeList
-  public recalculateTypeListDates() {
+  public recalculateTypeListDates(optionName: string = '') {
     let fieldValue = this.wpEditModeState.getFieldValue('dueDate'),
         startDate = (fieldValue) ? new Date(fieldValue) : '',
         typesList: Array<any> = this.typesList,
@@ -150,7 +188,22 @@ export class WorkPackageProcessesViewController {
       });
     }
 
-    // console.log('++typesList', typesList);
+    // operations with typesListOptions
+    if (this.typesListOptions) {
+      let selectedOption = this.typesListOptions.find((el: any) => {
+        return el.name === optionName;
+      });
+
+      let typesListOption = this.typesList.find((el: any) => {
+        return el.name === optionName;
+      });
+
+      if (selectedOption) {
+        selectedOption['visible'] = (typesListOption['checked']) ? false : true;
+      }
+    }
+
+    // console.log('++typesListOptions', this.typesListOptions);
   }
 
   public buildTasksList(typesList: Array<any>) {
@@ -234,9 +287,12 @@ export class WorkPackageProcessesViewController {
 
     if (this.typesList.length === 0) {
       this.$http.get('/api/v3/types').then((response: any) => {
-        console.log(response.data._embedded.elements);
+        // console.log(response.data._embedded.elements);
+        let elements = response.data._embedded.elements.filter((el: any) => {
+          return el['isDefault'] !== true;
+        });
 
-        this.typesList = [].concat(response.data._embedded.elements.map((el: any, index: number) => {
+        this.typesList = [].concat(elements.map((el: any, index: number) => {
           return {
             name: el.name,
             duration: index + 1,
@@ -246,6 +302,11 @@ export class WorkPackageProcessesViewController {
             dueDate: ''
           };
         }));
+
+        this.typesListOptions = this.typesList.slice();
+        this.typesListOptions.forEach((el: any) => {
+          el['visible'] = true;
+        });
         // console.log('++this.typesList', this.typesList);
 
         this.recalculateTypeListDates();

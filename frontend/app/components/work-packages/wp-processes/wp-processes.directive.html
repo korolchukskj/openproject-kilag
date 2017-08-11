@@ -1,4 +1,8 @@
-<!-- <h1>wp-processes-view</h1> -->
+<h1>wp-processes-view</h1>
+
+<select ng-model="$ctrl.selectModel.value" ng-change="$ctrl.onSelectOption($ctrl.selectModel.value)">
+  <option ng-repeat="option in $ctrl.typesListOptions" value="{{ option.name }}" ng-hide="option.visible === false">{{ option.name }}</option>
+</select>
 
 <div class="attributes-group wp-processes-view">
 
@@ -11,7 +15,7 @@
     <div class="-columns-2">
 
       <!-- field -->
-      <div class="attributes-key-value" ng-repeat="type in $ctrl.typesList track by $index">
+      <div class="attributes-key-value" ng-repeat="type in $ctrl.typesList track by $index" ng-hide="type.checked === false">
         <div class="attributes-key-value--key">
 
           <span class="ng-binding">
@@ -22,7 +26,7 @@
 
         <div class="attributes-key-value--value-container customField5">
           <div class="wp-edit-field inplace-edit -editable customField5 -small -active content-center">
-            <input type="checkbox" ng-model="type.checked" ng-change="$ctrl.recalculateTypeListDates()">
+            <input type="checkbox" ng-model="type.checked" ng-change="$ctrl.recalculateTypeListDates(type.name)">
           </div>
 
           <div class="items-container">
