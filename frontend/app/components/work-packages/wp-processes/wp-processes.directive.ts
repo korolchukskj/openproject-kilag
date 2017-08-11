@@ -166,10 +166,12 @@ export class WorkPackageProcessesViewController {
       typesList.forEach((type) => {
         if (type.checked) {
           let to = new Date(startDate),
-              from = new Date(startDate);
+              from = new Date(startDate),
+              duration = type.duration || 0,
+              wait = (checkedIndex === 0) ? 0 : type.wait || 0;
 
           // we don't need to wait if it is first task
-          from.setDate(from.getDate() - (type.duration + ((checkedIndex === 0) ? 0 : type.wait)));
+          from.setDate(from.getDate() - (duration + wait));
 
           type['startDate'] = this.$filter('date')(from, 'yyyy-MM-dd');
           type['dueDate'] = this.$filter('date')(to, 'yyyy-MM-dd');
