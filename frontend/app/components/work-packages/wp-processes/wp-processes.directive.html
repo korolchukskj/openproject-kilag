@@ -1,16 +1,52 @@
-<h1>wp-processes-view</h1>
+<!-- <h1>wp-processes-view</h1> -->
 
-<div ng-repeat="type in $ctrl.typesList track by $index" style="background-color: lightcoral;">
-  <h3>{{ type.name }}</h3>
+<div class="attributes-group wp-processes-view">
 
-  <input type="checkbox" ng-model="type.checked" ng-change="$ctrl.recalculateTypeListDates()">
+    <div class="attributes-group--header">
+      <div class="attributes-group--header-container">
+        <h3 class="attributes-group--header-text">Types</h3>
+      </div>
+    </div>
 
-  <span ng-if="type.duration">duration: {{ type.duration }}</span>
-  <span ng-if="type.wait">wait: {{ type.wait }}</span>
+    <div class="-columns-2">
 
-  <span ng-if="type.startDate">start: {{ type.startDate }}</span>
-  <span ng-if="type.dueDate">due: {{ type.dueDate }}</span>
+      <!-- field -->
+      <div class="attributes-key-value" ng-repeat="type in $ctrl.typesList track by $index">
+        <div class="attributes-key-value--key">
+
+          <span class="ng-binding">
+            {{ type.name }}
+          </span>
+
+        </div>
+
+        <div class="attributes-key-value--value-container customField5">
+          <div class="wp-edit-field inplace-edit -editable customField5 -small -active content-center">
+            <input type="checkbox" ng-model="type.checked" ng-change="$ctrl.recalculateTypeListDates()">
+          </div>
+
+          <div class="items-container">
+            <div class="row-items">
+              <div class="">
+                <span ng-if="type.duration">duration: {{ type.duration }}</span>
+              </div>
+
+              <div class="">
+                <span ng-if="type.wait">wait: {{ type.wait }}</span>
+              </div>
+            </div>
+
+            <div class="row-items">
+              <div class="">
+                <span ng-if="type.startDate">start: {{ type.startDate }}</span>
+              </div>
+
+              <div class="">
+                <span ng-if="type.dueDate">end: {{ type.dueDate }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 </div>
-
-<button ng-click="$ctrl.addTaskToSubtask()">addTaskToSubtask</button>
-<button ng-click="$ctrl.getForm()">get form</button>

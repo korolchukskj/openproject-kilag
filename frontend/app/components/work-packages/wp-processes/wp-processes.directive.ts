@@ -121,7 +121,8 @@ export class WorkPackageProcessesViewController {
   public recalculateTypeListDates() {
     let fieldValue = this.wpEditModeState.getFieldValue('dueDate'),
         startDate = (fieldValue) ? new Date(fieldValue) : '',
-        typesList: Array<any> = this.typesList;
+        typesList: Array<any> = this.typesList,
+        checkedIndex = 0;
 
     if (startDate) {
       typesList.forEach((type) => {
@@ -129,7 +130,8 @@ export class WorkPackageProcessesViewController {
           let to = new Date(startDate),
               from = new Date(startDate);
 
-          from.setDate(from.getDate() - (type.duration + type.wait));
+          // we don't need to wait if it is first task
+          from.setDate(from.getDate() - (type.duration + ((checkedIndex === 0) ? 0 : type.wait)));
 
           type['startDate'] = this.$filter('date')(from, 'yyyy-MM-dd');
           type['dueDate'] = this.$filter('date')(to, 'yyyy-MM-dd');
@@ -139,6 +141,8 @@ export class WorkPackageProcessesViewController {
           startDate = new Date(from);
           // endDate = prevStartDate - 1
           startDate.setDate(startDate.getDate() - 1);
+
+          checkedIndex++;
         } else {
           type['startDate'] = '';
           type['dueDate'] = '';
