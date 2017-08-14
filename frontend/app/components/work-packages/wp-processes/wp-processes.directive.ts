@@ -157,7 +157,7 @@ export class WorkPackageProcessesViewController {
   // from startDate - it is endDate of ParentTask
   // modifyers this.typeList
   public recalculateTypeListDates(optionName: string = '') {
-    let fieldValue = this.wpEditModeState.getFieldValue('dueDate'),
+    let fieldValue = this.wpEditModeState.getFieldValue('customField7'),
         startDate = (fieldValue) ? new Date(fieldValue) : '',
         typesList: Array<any> = this.typesList,
         checkedIndex = 0;
