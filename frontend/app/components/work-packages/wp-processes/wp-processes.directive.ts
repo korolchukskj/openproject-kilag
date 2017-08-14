@@ -157,7 +157,7 @@ export class WorkPackageProcessesViewController {
   // from startDate - it is endDate of ParentTask
   // modifyers this.typeList
   public recalculateTypeListDates(optionName: string = '') {
-    let fieldValue = this.wpEditModeState.getFieldValue('customField7'),
+    let fieldValue = this.wpEditModeState.getFieldValue('customField7' ? 'customField7' : 'dueDate'), //in case database changes customField7 should be replaced with new custom field ID
         startDate = (fieldValue) ? new Date(fieldValue) : '',
         typesList: Array<any> = this.typesList,
         checkedIndex = 0;
@@ -214,6 +214,7 @@ export class WorkPackageProcessesViewController {
       .map((task: any) => {
         return {
           subject: task.name,
+          type: task.name,
           startDate: task.startDate,
           dueDate: task.dueDate
         };
@@ -258,7 +259,8 @@ export class WorkPackageProcessesViewController {
          },
          "startDate": dataParams['startDate'], //item.data.startDate,
          "dueDate": dataParams['dueDate'],// item.data.dueDate,
-         "_links":  Object.assign({}, this.parentWP.$source._links), // Object.assign({}, item.data._links)
+         "type": dataParams['type'], // Object.assign({}, item.data._links)
+         "_links": Object.assign({}, this.parentWP.$source._links), // Object.assign({}, item.data._links)
         }).then((response) => {
           // console.log('++response', response);
         }).catch((error) => {
