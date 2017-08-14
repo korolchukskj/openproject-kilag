@@ -244,6 +244,10 @@ export class WorkPackageProcessesViewController {
     // console.log('++this.stateParams', this.stateParams);
     // console.log('++parentWP', this.parentWP);
 
+    let element = this.typesList.find((el: any) => {
+      return el.name === dataParams['subject'];
+    });
+    
     this.createWorkPackage(this.stateParams['projectPath'])
       .then(wp => {
 
@@ -258,7 +262,12 @@ export class WorkPackageProcessesViewController {
          },
          "startDate": dataParams['startDate'], //item.data.startDate,
          "dueDate": dataParams['dueDate'],// item.data.dueDate,
-         "_links": Object.assign({}, this.parentWP.$source._links, {"type": {"title": dataParams['subject']} }), // Object.assign({}, item.data._links)
+         "_links": {
+           "type": {
+             "href": '/api/v3/types/' + element.id,
+             "title": dataParams['subject']
+            }
+          } // Object.assign({}, item.data._links)
         }).then((response) => {
           // console.log('++response', response);
         }).catch((error) => {
@@ -297,6 +306,7 @@ export class WorkPackageProcessesViewController {
         this.typesList = [].concat(elements.map((el: any, index: number) => {
           return {
             name: el.name,
+            id: el.id,
             duration: 1,
             wait: 1,
             checked: false,
