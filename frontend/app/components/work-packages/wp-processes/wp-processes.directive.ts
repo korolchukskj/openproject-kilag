@@ -214,7 +214,6 @@ export class WorkPackageProcessesViewController {
       .map((task: any) => {
         return {
           subject: task.name,
-          type: task.name,
           startDate: task.startDate,
           dueDate: task.dueDate
         };
@@ -259,8 +258,7 @@ export class WorkPackageProcessesViewController {
          },
          "startDate": dataParams['startDate'], //item.data.startDate,
          "dueDate": dataParams['dueDate'],// item.data.dueDate,
-         "type": dataParams['type'], // Object.assign({}, item.data._links)
-         "_links": Object.assign({}, this.parentWP.$source._links), // Object.assign({}, item.data._links)
+         "_links": Object.assign({}, this.parentWP.$source._links, {"type": {"title": dataParams['subject']} }), // Object.assign({}, item.data._links)
         }).then((response) => {
           // console.log('++response', response);
         }).catch((error) => {
