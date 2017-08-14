@@ -297,8 +297,8 @@ export class WorkPackageProcessesViewController {
         this.typesList = [].concat(elements.map((el: any, index: number) => {
           return {
             name: el.name,
-            duration: index + 1,
-            wait: index + 1,
+            duration: 1,
+            wait: 1,
             checked: false,
             startDate: '',
             dueDate: ''
