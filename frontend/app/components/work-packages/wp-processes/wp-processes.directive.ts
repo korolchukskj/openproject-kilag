@@ -167,20 +167,19 @@ export class WorkPackageProcessesViewController {
         if (type.checked) {
           let to = new Date(startDate),
               from = new Date(startDate),
-              duration = type.duration || 0,
-              wait = (checkedIndex === 0) ? 0 : type.wait || 0;
-
-          // we don't need to wait if it is first task
+              duration = type.duration - 1 || 0,
+              wait = (checkedIndex === 0) ? 0 : type.wait || 0; // we don't need to wait if it is first task
+          
           from.setDate(from.getDate() - (duration + wait));
 
           type['startDate'] = this.$filter('date')(from, 'yyyy-MM-dd');
-          type['dueDate'] = this.$filter('date')(to, 'yyyy-MM-dd');
+          type['dueDate'] = this.$filter('date')(to.setDate(to.getDate() - wait), 'yyyy-MM-dd');
 
           // override startDate
           // with start Date of prev. type
           startDate = new Date(from);
           // endDate = prevStartDate - 1
-          startDate.setDate(startDate.getDate() - 1);
+          // startDate.setDate(startDate.getDate() - wait);
 
           checkedIndex++;
         } else {
@@ -262,12 +261,12 @@ export class WorkPackageProcessesViewController {
          },
          "startDate": dataParams['startDate'], //item.data.startDate,
          "dueDate": dataParams['dueDate'],// item.data.dueDate,
-         "_links": {
+         "_links": Object.assign({}, this.parentWP.$source._links, {
            "type": {
              "href": '/api/v3/types/' + element.id,
              "title": dataParams['subject']
             }
-          } // Object.assign({}, item.data._links)
+         })
         }).then((response) => {
           // console.log('++response', response);
         }).catch((error) => {
