@@ -157,7 +157,9 @@ export class WorkPackageProcessesViewController {
   // from startDate - it is endDate of ParentTask
   // modifyers this.typeList
   public recalculateTypeListDates(optionName: string = '') {
-    let fieldValue = this.wpEditModeState.getFieldValue('customField7' ? 'customField7' : 'dueDate'), //in case database changes customField7 should be replaced with new custom field ID
+    let dueDateField = this.wpEditModeState.getFieldValue('dueDate'),
+        customDateField = this.wpEditModeState.getFieldValue('customField7'),
+        fieldValue = customDateField ? customDateField : dueDateField, //in case database changes customField7 should be replaced with new custom field ID
         startDate = (fieldValue) ? new Date(fieldValue) : '',
         typesList: Array<any> = this.typesList,
         checkedIndex = 0;
@@ -168,7 +170,7 @@ export class WorkPackageProcessesViewController {
           let to = new Date(startDate),
               from = new Date(startDate),
               duration = type.duration - 1 || 0,
-              wait = (checkedIndex === 0) ? 0 : type.wait || 0; // we don't need to wait if it is first task
+              wait = (checkedIndex === 0) ? 0 : type.wait + 1 || 0; // we don't need to wait if it is first task
           
           from.setDate(from.getDate() - (duration + wait));
 
