@@ -55,9 +55,11 @@ export class HierarchyTransformer {
 
       /* Clone the HTML bar chart elements */
       for(let i = 0; i < timelineElm.length; i++) {
-        console.log(timelineElm[i]);
+        console.dir(timelineElm[i]);
 
-        jQuery(timelineElm[i]).clone().appendTo(`#wp-timeline-row-${wpId}`);
+        if (timelineElm[i].className.indexOf('__collapsed-group-') === -1) {
+          jQuery(timelineElm[i]).clone().appendTo(`#wp-timeline-row-${wpId}`);
+        }
       }
     } else {
       jQuery(`#wp-timeline-row-${wpId}`).removeClass('collapsed-timeline-chart');
