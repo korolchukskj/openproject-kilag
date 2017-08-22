@@ -38,57 +38,51 @@ export class HierarchyTransformer {
   private renderHierarchyState(state:WorkPackageTableHierarchies) {
     const rendered = this.states.table.rendered.value!;
 
-   // Show all hierarchies
-   jQuery('[class^="__hierarchy-group-"]').removeClass((i:number, classNames:string):string => {
-    return (classNames.match(/__collapsed-group-\d+/g) || []).join(' ');
-   });
+    // Show all hierarchies
+    jQuery('[class^="__hierarchy-group-"]').removeClass((i:number, classNames:string):string => {
+      return (classNames.match(/__collapsed-group-\d+/g) || []).join(' ');
+    });
 
-   // Hide all collapsed hierarchies
-   _.each(state.collapsed, (isCollapsed:boolean, wpId:string) => {
+    // Hide all collapsed hierarchies
+    _.each(state.collapsed, (isCollapsed:boolean, wpId:string) => {
 
+      if(isCollapsed) {
+        // Add class to WP row
+        jQuery(`#wp-timeline-row-${wpId}`).addClass('collapsed-timeline-chart');
 
-     if(isCollapsed) {
-       console.log(isCollapsed, wpId);
-       let timelineElm = jQuery(`.wp-table-timeline--body .${hierarchyGroupClass(wpId)}`);
-       console.log('timelineElm: ', timelineElm);
-       jQuery(`#wp-timeline-row-${wpId}`).addClass('collapsed-timeline-chart');
+        /* Clone the HTML bar chart elements */
+        let timelineElm = jQuery(`.wp-table-timeline--body .${hierarchyGroupClass(wpId)}`);
+        for(let i = 0; i < timelineElm.length; i++) {
 
-      /* Clone the HTML bar chart elements */
-      for(let i = 0; i < timelineElm.length; i++) {
-        console.dir(timelineElm[i]);
-
-        if (timelineElm[i].className.indexOf('__collapsed-group-') === -1) {
-          jQuery(timelineElm[i]).clone().appendTo(`#wp-timeline-row-${wpId}`);
+          if (timelineElm[i].className.indexOf('__collapsed-group-') === -1) {
+            // Append children to WP row
+            jQuery(timelineElm[i]).clone().appendTo(`#wp-timeline-row-${wpId}`);
+          }
         }
+      } else {
+        // Remove class and children from WP row
+        jQuery(`#wp-timeline-row-${wpId}`).removeClass('collapsed-timeline-chart');
+        jQuery(`#wp-timeline-row-${wpId} .wp-timeline-cell`).remove();
       }
-    } else {
-      jQuery(`#wp-timeline-row-${wpId}`).removeClass('collapsed-timeline-chart');
-      // console.log('ELEMENT: ', jQuery(`#wp-timeline-row-${wpId} [class^="__hierarchy-group-"]`));
-      console.log('ELEMENT: ', jQuery(`#wp-timeline-row-${wpId} .wp-timeline-cell`));
-      jQuery(`#wp-timeline-row-${wpId} .wp-timeline-cell`).remove();
-      // jQuery(`#wp-timeline-row-${wpId} '[class^="__hierarchy-group-"]'`).remove();
-    }
 
-    //  console.log(jQuery(`.${hierarchyRootClass(wpId)})`));
+      // Toggle the root style
+      jQuery(`.${hierarchyRootClass(wpId)} .wp-table--hierarchy-indicator`).toggleClass(indicatorCollapsedClass, isCollapsed);
 
-     // Toggle the root style
-     jQuery(`.${hierarchyRootClass(wpId)} .wp-table--hierarchy-indicator`).toggleClass(indicatorCollapsedClass, isCollapsed);
+      // Get all affected rows
+      const affected = jQuery(`.${hierarchyGroupClass(wpId)}`);
 
-     // Get all affected rows
-     const affected = jQuery(`.${hierarchyGroupClass(wpId)}`);
+      // Hide/Show the descendants.
+      affected.toggleClass(collapsedGroupClass(wpId), isCollapsed);
 
-     // Hide/Show the descendants.
-     affected.toggleClass(collapsedGroupClass(wpId), isCollapsed);
+      // Update the hidden section of the rendered state
+      affected.filter(`.${rowClassName}`).each((i, el) => {
+        // Get the index of this row
+        const index = jQuery(el).index();
 
-     // Update the hidden section of the rendered state
-     affected.filter(`.${rowClassName}`).each((i, el) => {
-       // Get the index of this row
-       const index = jQuery(el).index();
-
-       // Update the hidden state
-       rendered.renderedOrder[index].hidden = isCollapsed;
-     });
-   });
+        // Update the hidden state
+        rendered.renderedOrder[index].hidden = isCollapsed;
+        });
+      });
 
    this.states.table.rendered.putValue(rendered, 'Updated hidden state of rows after hierarchy change.');
   }
