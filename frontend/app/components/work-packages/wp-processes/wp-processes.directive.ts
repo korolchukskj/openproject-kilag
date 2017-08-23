@@ -77,6 +77,7 @@ export class WorkPackageProcessesViewController {
   protected firstTimeFocused: boolean = false;
 
   constructor(public loadingIndicator: LoadingIndicatorService,
+              public $q:ng.IQService,
               protected $http:ng.IHttpService,
               protected $scope:ng.IScope,
               protected $rootScope:ng.IRootScopeService,
@@ -171,7 +172,7 @@ export class WorkPackageProcessesViewController {
               from = new Date(startDate),
               duration = type.duration - 1 || 0,
               wait = (checkedIndex === 0) ? 0 : type.wait + 1 || 0; // we don't need to wait if it is first task
-          
+
           from.setDate(from.getDate() - (duration + wait));
 
           type['startDate'] = this.$filter('date')(from, 'yyyy-MM-dd');
@@ -248,7 +249,9 @@ export class WorkPackageProcessesViewController {
     let element = this.typesList.find((el: any) => {
       return el.name === dataParams['subject'];
     });
-    
+
+    const deferred = this.$q.defer();
+
     this.createWorkPackage(this.stateParams['projectPath'])
       .then(wp => {
 
@@ -270,14 +273,20 @@ export class WorkPackageProcessesViewController {
             }
          })
         }).then((response) => {
-          // console.log('++response', response);
+          deferred.resolve(response);
+
+          console.log('++response', response);
         }).catch((error) => {
+          deferred.reject(error);
           throw error;
         });
       })
       .catch(error => {
+        deferred.reject(error);
         throw error
       });
+
+    return deferred.promise;
   }
 
   private blockViewBeforeSave() {
