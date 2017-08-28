@@ -1,16 +1,10 @@
-<h1>Work Processes</h1>
-
+<h1>Prozesse</h1>
+<p>Select process from the list to add it. Uncheck the boxes to remove.</p>
 <select ng-model="$ctrl.selectModel.value" ng-change="$ctrl.onSelectOption($ctrl.selectModel.value)">
   <option ng-repeat="option in $ctrl.typesListOptions" value="{{ option.name }}" ng-hide="option.visible === false">{{ option.name }}</option>
 </select>
 
 <div class="attributes-group wp-processes-view">
-
-    <div class="attributes-group--header">
-      <div class="attributes-group--header-container">
-        <h3 class="attributes-group--header-text">Dates</h3>
-      </div>
-    </div>
 
     <div class="-columns-2">
 
@@ -29,7 +23,7 @@
             <div class="row-items">
               <div class="">
                 <!-- <span ng-if="type.duration">duration: {{ type.duration }}</span> -->
-                <span>duration: </span>
+                <span>Aufwand (Tage): </span>
                 <input
                   type="number"
                   class="number-input no-spinners"
@@ -40,7 +34,7 @@
 
               <div class="">
                 <!-- <span ng-if="type.wait">wait: {{ type.wait }}</span> -->
-                <span>wait: </span>
+                <span>Wartezeit (Tage): </span>
                 <input
                   type="number"
                   class="number-input no-spinners"
