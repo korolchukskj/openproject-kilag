@@ -276,7 +276,7 @@ group :docker do
   gem 'passenger'
 
   # Used to easily precompile assets
-  gem 'sqlite3', require: false
+ 
   gem 'rails_12factor', require: !!ENV['HEROKU']
   gem 'health_check', require: !!ENV['HEROKU']
   gem 'newrelic_rpm', require: !!ENV['HEROKU']
