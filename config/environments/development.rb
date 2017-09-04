@@ -37,7 +37,7 @@ OpenProject::Application.configure do
 
   # Automatically refresh translations with I18n middleware
   config.middleware.use ::I18n::JS::Middleware
-
+  config.assets.compile = false
   # Do not eager load code on boot.
   config.eager_load = false
 
