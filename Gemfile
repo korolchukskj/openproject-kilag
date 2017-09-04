@@ -36,7 +36,7 @@ gem 'activemodel-serializers-xml', '~> 1.0.1'
 gem 'activerecord-session_store', '~> 1.1.0'
 gem 'rails', '~> 5.0.3'
 gem 'responders', '~> 2.4'
-
+gem 'rails_12factor', group: :production
 gem 'coderay', '~> 1.1.0'
 gem 'rubytree', git: 'https://github.com/dr0verride/RubyTree.git', ref: '06f53ee'
 gem 'rdoc', '>= 2.4.2'
@@ -276,7 +276,6 @@ group :docker do
   gem 'passenger'
 
   # Used to easily precompile assets
-  gem 'rails_12factor', require: !!ENV['HEROKU']
   gem 'health_check', require: !!ENV['HEROKU']
   gem 'newrelic_rpm', require: !!ENV['HEROKU']
 end
