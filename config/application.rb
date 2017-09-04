@@ -79,7 +79,6 @@ module OpenProject
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
-    config.assets.initialize_on_precompile = false
     # Use Rack::Deflater to gzip/deflate all the responses if the
     # HTTP_ACCEPT_ENCODING header is set appropriately. As Rack::ETag as
     # Rack::Deflater adds a timestamp to the content which would result in a
