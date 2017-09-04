@@ -62,7 +62,7 @@ if defined?(Bundler)
   #
   # to ensure the code to be loaded. So we provide a compaibility
   # layer here. One might remove this later.
-  $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
+config.assets.initialize_on_precompile = false  $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
   require 'open_project/plugins'
 
   # Require the gems listed in Gemfile, including any gems
