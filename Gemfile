@@ -29,11 +29,11 @@
 source 'https://rubygems.org'
 
 # We do not yet support 2.4
-ruby '~> 2.4.1'
+ruby '2.4.1'
 
 gem 'actionpack-xml_parser', '~> 2.0.0'
 gem 'activemodel-serializers-xml', '~> 1.0.1'
-gem 'activerecord-session_store', '~> 1.0.0'
+gem 'activerecord-session_store', '~> 1.1.0'
 gem 'rails', '~> 5.0.3'
 gem 'responders', '~> 2.4'
 
@@ -42,7 +42,7 @@ gem 'rubytree', git: 'https://github.com/dr0verride/RubyTree.git', ref: '06f53ee
 gem 'rdoc', '>= 2.4.2'
 
 gem 'globalize', git: 'https://github.com/globalize/globalize', ref: '38443bcd', require: false
-gem 'omniauth', git: 'https://github.com/oliverguenther/omniauth', ref: '8385bc0'
+gem 'omniauth', git: 'https://github.com/oliverguenther/omniauth', ref: '40c6f5f751d2da7cce5444bbd96c390c450440a9'
 gem 'request_store', '~> 1.3.1'
 gem 'gravatar_image_tag', '~> 1.2.0'
 
@@ -55,7 +55,7 @@ gem 'will_paginate', '~> 3.1.0'
 gem 'acts_as_list', '~> 0.9.5'
 gem 'acts_as_tree', '~> 2.6.1'
 
-gem 'friendly_id', git: 'https://github.com/norman/friendly_id', ref: 'aff05645' # '~> 5.1.0'
+gem 'friendly_id', '~> 5.2.1'
 
 gem 'awesome_nested_set', '~> 3.1.3'
 
@@ -90,7 +90,7 @@ gem 'bcrypt', '~> 3.1.6'
 # See: config/initializers/rabl_hack.rb
 gem 'rabl', '~> 0.13.0'
 gem 'multi_json', '~> 1.12.1'
-gem 'oj', '~> 3.0.6'
+gem 'oj', '~> 3.2.0'
 
 gem 'daemons'
 gem 'delayed_job_active_record', '~> 4.1.1'
@@ -149,7 +149,7 @@ gem 'cocaine', '~> 0.5.8'
 # also, better than thin since we can control worker concurrency.
 gem 'unicorn'
 
-gem 'nokogiri', '~> 1.7.2'
+gem 'nokogiri', '~> 1.8.0'
 
 # carrierwave 0.11.3 should allow to use fog-aws without the rest of the
 # fog dependency chain. We only need aws here, so we can avoid it
@@ -194,13 +194,13 @@ group :test do
   # More information: https://github.com/rspec/rspec-rails/issues/1644
   gem 'rails-controller-testing', git: 'https://github.com/rails/rails-controller-testing/'
 
+  gem 'aws-sdk', '~> 2.10.1'
   gem 'capybara', '~> 2.13.0'
   gem 'capybara-screenshot', '~> 1.0.14'
-  gem 'aws-sdk', '~> 2.9.25'
   gem 'fuubar', '~> 2.2.0'
   gem 'capybara-select2', git: 'https://github.com/goodwill/capybara-select2', ref: '585192e'
   gem 'capybara-ng', '~> 0.2.7'
-  gem 'selenium-webdriver', '~> 2.53.4'
+  gem 'selenium-webdriver', '~> 3.4'
   gem 'timecop', '~> 0.8.1'
   gem 'webmock', '~> 3.0.0', require: false
 
@@ -226,22 +226,22 @@ group :development do
 end
 
 group :development, :test do
-  gem 'thin', '~> 1.7.0'
+  gem 'thin', '~> 1.7.1'
 
   gem 'pry-rails', '~> 0.3.6'
   gem 'pry-stack_explorer', '~> 0.4.9.2'
   gem 'pry-rescue', '~> 1.4.5'
   gem 'pry-byebug', '~> 3.4.2', platforms: [:mri]
   gem 'pry-doc', '~> 0.10'
-
 end
 
 # API gems
 gem 'grape', '~> 0.19.2'
 gem 'grape-cache_control', '~> 1.0.1'
 
-gem 'roar',   '~> 1.0.0'
-gem 'reform', '~> 1.2.6', require: false
+gem 'reform', '~> 2.2.0'
+gem 'reform-rails', '~> 0.1.7'
+gem 'roar', '~> 1.1.0'
 
 platforms :mri, :mingw, :x64_mingw do
   group :mysql2 do
@@ -249,7 +249,7 @@ platforms :mri, :mingw, :x64_mingw do
   end
 
   group :postgres do
-    gem 'pg', '~> 0.20.0'
+    gem 'pg', '~> 0.21.0'
   end
 end
 
@@ -266,7 +266,7 @@ platforms :jruby do
 end
 
 group :opf_plugins do
-  gem 'openproject-translations', git: 'https://github.com/opf/openproject-translations.git', branch: 'release/7.1'
+  gem 'openproject-translations', git: 'https://github.com/opf/openproject-translations.git', branch: 'dev'
 end
 
 # TODO: Make this group :optional when bundler v10.x
@@ -276,7 +276,6 @@ group :docker do
   gem 'passenger'
 
   # Used to easily precompile assets
- 
   gem 'rails_12factor', require: !!ENV['HEROKU']
   gem 'health_check', require: !!ENV['HEROKU']
   gem 'newrelic_rpm', require: !!ENV['HEROKU']
