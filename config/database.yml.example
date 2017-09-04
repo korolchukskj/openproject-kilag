@@ -29,25 +29,13 @@
 # MySQL (default setup).
 
 production:
-  adapter: mysql2
-  database: openproject
-  host: localhost
-  username: root
-  password:
+  adapter: postgresql
+  database: kilag_test
+  host: 185.15.211.5
+  username: kilag
+  password: Ki2L6a-G/
+  port: 11100
   encoding: utf8
-  variables:
-    # These are the default MySql Modes for rails 5.0 only excluding
-    # ONLY_FULL_GROUP_BY which would interfere with the current implementation
-    # of the query grouping by custom fields.
-    sql_mode:
-      "no_auto_value_on_zero,\
-      strict_trans_tables,\
-      no_zero_date,\
-      strict_all_tables,\
-      no_zero_in_date,\
-      error_for_division_by_zero,\
-      no_auto_create_user,\
-      no_engine_substitution"
 
 development:
   adapter: postgresql
